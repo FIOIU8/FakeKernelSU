@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+import me.weishu.kernelsu.fake.FakeModules
+import me.weishu.kernelsu.fake.FakeState
+import me.weishu.kernelsu.ui.util.syncLauncherAlias
 import me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -51,8 +54,17 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
             setEnableOnBackInvokedCallback(applicationInfo, enable)
         }
 
-        val superUserViewModel = ViewModelProvider(this)[SuperUserViewModel::class.java]
-        superUserViewModel.loadAppList()
+        // Apply the "reboot" semantics of staged module removals on next start.
+        FakeModules.purgePendingRemoval()
+
+        // Keep the launcher alias in sync with the persisted choice.
+        syncLauncherAlias()
+
+        // Only preload the superuser list when the fake install is active.
+        if (Natives.isManager) {
+            val superUserViewModel = ViewModelProvider(this)[SuperUserViewModel::class.java]
+            superUserViewModel.loadAppList()
+        }
 
         val webroot = File(dataDir, "webroot")
         if (!webroot.exists()) {

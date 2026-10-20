@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -449,6 +451,61 @@ fun SuperUserPagerMiuix(
                         ),
                         overscrollEffect = null,
                     ) {
+                        item(key = "fake-su-request") {
+                            FakeSuRequestHost(
+                                uiState = uiState,
+                                onRefresh = actions.onRefresh,
+                            ) { onClick ->
+                                Card(
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp)
+                                        .padding(bottom = 6.dp),
+                                    onClick = onClick,
+                                    showIndication = true,
+                                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Terminal,
+                                            tint = colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .padding(end = 10.dp)
+                                                .size(24.dp),
+                                            contentDescription = null
+                                        )
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.fake_su_trigger),
+                                                fontWeight = FontWeight(550),
+                                                color = colorScheme.onSurface,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.fake_su_trigger_summary),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight(550),
+                                                color = colorScheme.onSurfaceVariantSummary,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                        }
+                                        Image(
+                                            modifier = Modifier
+                                                .padding(start = 8.dp)
+                                                .size(width = 10.dp, height = 16.dp),
+                                            imageVector = MiuixIcons.Basic.ArrowRight,
+                                            contentDescription = null,
+                                            colorFilter = ColorFilter.tint(colorScheme.onSurfaceVariantActions),
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         items(uiState.groupedApps, key = { it.uid }, contentType = { "group" }) { group ->
                             val expanded = expandedUids.value.contains(group.uid)
                             Column {

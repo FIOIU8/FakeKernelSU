@@ -1,19 +1,15 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.google.protobuf.gradle.id
-
 plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.lsplugin.apksign)
-    alias(libs.plugins.protobuf)
     id("kotlin-parcelize")
 }
 
 val androidCompileSdkVersion = rootProject.extra["androidCompileSdkVersion"] as Int
 val androidCompileSdkVersionMinor = rootProject.extra["androidCompileSdkVersionMinor"] as Int
-val androidCompileNdkVersion = rootProject.extra["androidCompileNdkVersion"] as String
 val androidBuildToolsVersion = rootProject.extra["androidBuildToolsVersion"] as String
 val androidMinSdkVersion = rootProject.extra["androidMinSdkVersion"] as Int
 val androidTargetSdkVersion = rootProject.extra["androidTargetSdkVersion"] as Int
@@ -35,24 +31,6 @@ apksign {
     keyPasswordProperty = "KEY_PASSWORD"
 }
 
-protobuf {
-    protoc {
-        artifact = libs.protobuf.protoc.get().toString()
-    }
-    generateProtoTasks {
-        ofNonTest().forEach { task ->
-            task.builtins {
-                id("java") {
-                    option("lite")
-                }
-                id("kotlin") {
-                    option("lite")
-                }
-            }
-        }
-    }
-}
-
 val baseCFlags = listOf(
     "-Wall", "-Qunused-arguments", "-fvisibility=hidden", "-fvisibility-inlines-hidden",
     "-fno-exceptions", "-fno-stack-protector", "-fomit-frame-pointer",
@@ -65,38 +43,12 @@ android {
 
     buildTypes {
         debug {
-            externalNativeBuild {
-                cmake {
-                    arguments += listOf("-DCMAKE_CXX_FLAGS_DEBUG=-Og", "-DCMAKE_C_FLAGS_DEBUG=-Og")
-                }
-            }
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             vcsInfo.include = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            externalNativeBuild {
-                cmake {
-                    arguments += "-DDEBUG_SYMBOLS_PATH=${layout.buildDirectory.get().asFile.absolutePath}/symbols"
-                    arguments += "-DCMAKE_BUILD_TYPE=Release"
-
-                    val releaseFlags = listOf(
-                        "-flto", "-ffunction-sections", "-fdata-sections", "-Wl,--gc-sections",
-                        "-fno-unwind-tables", "-fno-asynchronous-unwind-tables", "-Wl,--exclude-libs,ALL"
-                    )
-                    val configFlags = listOf("-Oz", "-DNDEBUG").joinToString(" ")
-
-                    cppFlags += releaseFlags
-                    cFlags += releaseFlags
-
-                    arguments += listOf(
-                        "-DCMAKE_CXX_FLAGS_RELEASE=$configFlags",
-                        "-DCMAKE_C_FLAGS_RELEASE=$configFlags",
-                        "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--gc-sections -Wl,--exclude-libs,ALL -Wl,--icf=all -s -Wl,--hash-style=sysv -Wl,-z,norelro"
-                    )
-                }
-            }
         }
     }
 
@@ -105,7 +57,6 @@ android {
         buildConfig = true
         resValues = true
         compose = true
-        prefab = true
     }
 
     packaging {
@@ -115,12 +66,6 @@ android {
         jniLibs {
             useLegacyPackaging = true
             excludes += "lib/*/libandroidx.graphics.path.so"
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
         }
     }
 
@@ -139,7 +84,6 @@ android {
             }
     }
     buildToolsVersion = androidBuildToolsVersion
-    ndkVersion = androidCompileNdkVersion
 
     defaultConfig {
         minSdk = androidMinSdkVersion
@@ -150,18 +94,6 @@ android {
 
         buildConfigField("boolean", "IS_PR_BUILD", isPrBuild.toString())
         resValue("string", "app_name", managerName)
-
-        externalNativeBuild {
-            cmake {
-                arguments += "-DANDROID_STL=none"
-                cFlags += baseCFlags + "-std=c2x"
-                cppFlags += baseCppFlags + "-std=c++2b"
-            }
-        }
-
-        ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64", "riscv64")
-        }
     }
 
     lint {
@@ -222,8 +154,6 @@ dependencies {
 
     implementation(libs.androidx.webkit)
 
-    implementation(libs.lsposed.cxx)
-
     implementation(libs.hiddenapibypass)
 
     implementation(libs.miuix.ui)
@@ -241,7 +171,6 @@ dependencies {
 
     implementation(libs.commons.compress)
     implementation(libs.xz)
-    implementation(libs.protobuf.kotlin.lite)
 
     testImplementation(libs.junit)
 }

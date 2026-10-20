@@ -65,6 +65,7 @@ import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.isInDarkTheme
 import me.weishu.kernelsu.ui.util.BlurredBar
+import me.weishu.kernelsu.ui.util.fakeAppName
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.BasicComponent
@@ -231,7 +232,7 @@ private fun TopBar(
     BlurredBar(backdrop) {
         TopAppBar(
             color = barColor,
-            title = stringResource(R.string.app_name),
+            title = fakeAppName(),
             actions = {
                 RebootListPopupMiuix()
             },
@@ -368,7 +369,8 @@ private fun StatusCard(
                 }
             }
 
-            state.kernelVersion.isGKI() -> {
+            // FakeKernelSU: "unsupported" only when the control panel forces it
+            state.fakeState != me.weishu.kernelsu.fake.FakeInstallState.UNSUPPORTED -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Card(
                         modifier = Modifier.weight(1f),

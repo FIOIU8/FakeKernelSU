@@ -72,6 +72,7 @@ import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopup
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
+import me.weishu.kernelsu.ui.util.fakeAppName
 
 @Composable
 fun HomePagerMaterial(
@@ -183,7 +184,7 @@ private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     LargeFlexibleTopAppBar(
-        title = { Text(stringResource(R.string.app_name)) },
+        title = { Text(fakeAppName()) },
         actions = { RebootListPopup() },
         colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
@@ -198,7 +199,9 @@ private fun StatusCard(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
         val ksuActive = state.ksuVersion != null
-        val notInstalled = !ksuActive && state.kernelVersion.isGKI()
+        // FakeKernelSU: "unsupported" is only shown when the control panel forces it;
+        // upstream also required a GKI kernel here, which the demo skips.
+        val notInstalled = !ksuActive && state.fakeState != me.weishu.kernelsu.fake.FakeInstallState.UNSUPPORTED
 
         val containerColor = if (ksuActive) {
             MaterialTheme.colorScheme.secondaryContainer

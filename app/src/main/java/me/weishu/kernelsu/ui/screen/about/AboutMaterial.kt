@@ -37,18 +37,30 @@ import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.material.TopBarBackButton
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
+import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
+import me.weishu.kernelsu.ui.util.fakeAppName
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
 
 @Composable
 fun AboutScreenMaterial(
     state: AboutUiState,
     actions: AboutScreenActions,
 ) {
+    val navigator = LocalNavigator.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     ExpressiveScaffold(
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(state.title) },
+                title = {
+                    Text(
+                        text = fakeAppName(),
+                        modifier = rememberFakeUnlockTapModifier {
+                            navigator.push(Route.FakePanel)
+                        },
+                    )
+                },
                 navigationIcon = {
                     TopBarBackButton(onClick = actions.onBack)
                 },

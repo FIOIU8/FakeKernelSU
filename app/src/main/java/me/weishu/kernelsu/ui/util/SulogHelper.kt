@@ -1,8 +1,9 @@
 package me.weishu.kernelsu.ui.util
 
 import android.os.SystemClock
-import com.topjohnwu.superuser.io.SuFile
-import com.topjohnwu.superuser.io.SuFileInputStream
+import me.weishu.kernelsu.fake.FakeState
+import java.io.File
+import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.time.Instant
 import java.time.LocalDate
@@ -11,7 +12,7 @@ import java.time.format.DateTimeFormatter
 import java.util.ArrayDeque
 import java.util.Locale
 
-private const val SULOG_DIR = "/data/adb/ksu/log"
+private val SULOG_DIR: String = File(FakeState.ksuDir, "log").absolutePath
 private const val SULOG_LINE_LIMIT = 1000
 private const val SULOG_FILE_PREFIX = "sulog-"
 private const val SULOG_FILE_SUFFIX = ".log"
@@ -95,7 +96,7 @@ internal fun resolveSulogFileCleanAction(
 }
 
 fun listSulogFiles(): List<SulogFile> {
-    val directory = SuFile(SULOG_DIR)
+    val directory = File(SULOG_DIR)
     val fileNames = directory.list().orEmpty().toList()
     return parseSulogFileNames(fileNames).map { name ->
         SulogFile(name = name, path = "$SULOG_DIR/$name")
@@ -103,13 +104,13 @@ fun listSulogFiles(): List<SulogFile> {
 }
 
 fun readSulogFile(path: String): List<String> {
-    val suFile = SuFile(path)
-    if (!suFile.isFile) {
+    val file = File(path)
+    if (!file.isFile) {
         return emptyList()
     }
 
     val lines = ArrayDeque<String>(SULOG_LINE_LIMIT)
-    SuFileInputStream.open(suFile).use { input ->
+    FileInputStream(file).use { input ->
         InputStreamReader(input).buffered().useLines { sequence ->
             sequence.forEach { line ->
                 if (lines.size == SULOG_LINE_LIMIT) {
@@ -326,11 +327,9 @@ internal fun String.toSulogDisplayName(): String {
 }
 
 fun cleanSulogFile(path: String): Boolean {
-    val suFile = SuFile(path)
-    return suFile.clear()
+    return runCatching { File(path).writeText("") }.isSuccess
 }
 
 fun deleteSulogFile(path: String): Boolean {
-    val suFile = SuFile(path)
-    return suFile.delete()
+    return runCatching { File(path).delete() }.isSuccess
 }

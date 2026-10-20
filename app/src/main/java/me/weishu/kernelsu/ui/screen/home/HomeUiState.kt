@@ -2,6 +2,7 @@ package me.weishu.kernelsu.ui.screen.home
 
 import androidx.compose.runtime.Immutable
 import me.weishu.kernelsu.KernelVersion
+import me.weishu.kernelsu.fake.FakeInstallState
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 
 @Immutable
@@ -24,6 +25,8 @@ data class HomeUiState(
     val latestVersionInfo: LatestVersionInfo,
     val currentManagerVersionCode: Long,
     val systemInfo: SystemInfo,
+    /** FakeKernelSU: effective display state from the control panel. */
+    val fakeState: FakeInstallState = FakeInstallState.AUTO,
 ) {
     val isSELinuxPermissive: Boolean
         get() = systemInfo.selinuxStatus == "Permissive"

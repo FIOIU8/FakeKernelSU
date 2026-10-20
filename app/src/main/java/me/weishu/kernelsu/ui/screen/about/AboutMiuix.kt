@@ -59,10 +59,14 @@ import kotlinx.coroutines.flow.onEach
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.miuix.effect.BgEffectBackground
 import me.weishu.kernelsu.ui.component.miuix.effect.ColorBlendToken
+import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.isInDarkTheme
 import me.weishu.kernelsu.ui.util.BlurredBar
+import me.weishu.kernelsu.ui.util.fakeAppName
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -92,6 +96,7 @@ fun AboutScreenMiuix(
     state: AboutUiState,
     actions: AboutScreenActions,
 ) {
+    val navigator = LocalNavigator.current
     val topAppBarScrollBehavior = MiuixScrollBehavior()
     val lazyListState = rememberLazyListState()
     var logoHeightPx by remember { mutableIntStateOf(0) }
@@ -119,9 +124,15 @@ fun AboutScreenMiuix(
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop = barBlurBackdrop, blurActive = blurActive) {
+            BlurredBar(
+                backdrop = barBlurBackdrop,
+                blurActive = blurActive,
+                modifier = rememberFakeUnlockTapModifier {
+                    if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
+                },
+            ) {
                 SmallTopAppBar(
-                    title = state.title,
+                    title = fakeAppName(),
                     scrollBehavior = topAppBarScrollBehavior,
                     color = barColor,
                     titleColor = colorScheme.onSurface.copy(
