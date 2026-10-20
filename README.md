@@ -93,6 +93,21 @@ export JAVA_HOME="/d/Program Files/Android/Android Studio/jbr"
 改包名：编辑 `gradle.properties` 的 `KSU_PACKAGE_NAME`；改显示名：`KSU_NAME`。
 （版本号由 `git rev-list`/`git describe` 生成，所以必须在 git 仓库中构建。）
 
+### 发布签名
+
+release 构建由 `org.lsposed.lsplugin.apksign` 插件负责签名。把仓库根目录的
+`sign.example.properties` 复制为 `sign.properties` 并填入自己的密钥库即可：
+
+```properties
+KEYSTORE_FILE=./my-release.jks
+KEYSTORE_PASSWORD=xxxx
+KEY_ALIAS=my-alias
+KEY_PASSWORD=xxxx
+```
+
+> 未配置 `sign.properties` 时插件会回退到 **Android Debug 证书** 签名——可以正常安装测试，
+> 但**不要**用它公开发布（用户无法覆盖安装同包名的正式版）。
+
 ---
 
 ## 七、免责声明
