@@ -11,3 +11,9 @@ key.jks
 reference/
 
 dist/
+
+# 文档目录：本地保留，不纳入版本管理
+docs/
+
+# Gradle 工具链自动生成（与机器相关）
+gradle/gradle-daemon-jvm.properties
