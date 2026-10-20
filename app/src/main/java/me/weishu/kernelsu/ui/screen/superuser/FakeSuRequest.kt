@@ -43,6 +43,8 @@ import me.weishu.kernelsu.data.model.AppInfo
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSu
 import me.weishu.kernelsu.fake.FakeSuRequestMode
+import me.weishu.kernelsu.ui.LocalUiMode
+import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.AppIconImage
 import kotlin.random.Random
 
@@ -54,6 +56,8 @@ import kotlin.random.Random
  * show a high-fidelity grant dialog, then record the result through
  * [FakeSu.recordRequest] so the app profile and the sulog are updated exactly
  * like a real kernel-routed request.
+ *
+ * The dialogs are rendered with the skin the user picked in the settings.
  */
 @Composable
 fun FakeSuRequestHost(
@@ -134,97 +138,151 @@ fun FakeSuRequestHost(
     }
 
     if (showPicker) {
-        AlertDialog(
-            onDismissRequest = { showPicker = false },
-            title = { Text(stringResource(R.string.fake_su_pick_title)) },
-            text = {
-                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(pool, key = { it.packageName }) { app ->
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                showPicker = false
-                                pending = app
-                            },
-                            headlineContent = {
-                                Text(app.label, overflow = TextOverflow.Ellipsis, maxLines = 1)
-                            },
-                            supportingContent = {
-                                Text(
-                                    app.packageName,
-                                    overflow = TextOverflow.Ellipsis,
-                                    maxLines = 1,
-                                )
-                            },
-                            leadingContent = {
-                                AppIconImage(
-                                    packageInfo = app.packageInfo,
-                                    label = app.label,
-                                    modifier = Modifier.size(40.dp),
-                                )
-                            },
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showPicker = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> FakeAppPickerDialogMiuix(
+                pool = pool,
+                onPick = { app ->
+                    showPicker = false
+                    pending = app
+                },
+                onDismiss = { showPicker = false },
+            )
+
+            UiMode.Material -> FakeAppPickerDialog(
+                pool = pool,
+                onPick = { app ->
+                    showPicker = false
+                    pending = app
+                },
+                onDismiss = { showPicker = false },
+            )
+        }
     }
 
     pending?.let { app ->
-        AlertDialog(
-            onDismissRequest = { pending = null },
-            icon = {
-                AppIconImage(
-                    packageInfo = app.packageInfo,
-                    label = app.label,
-                    modifier = Modifier.size(48.dp),
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.fake_su_request_title),
-                    textAlign = TextAlign.Center,
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = stringResource(R.string.fake_su_request_message, app.label),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = rememberGrant,
-                            onCheckedChange = { rememberGrant = it },
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.fake_su_remember))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { decide(app, granted = true) }) {
-                    Text(stringResource(R.string.fake_su_allow))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { decide(app, granted = false) }) {
-                    Text(stringResource(R.string.fake_su_deny))
-                }
-            },
-        )
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> FakeGrantDialogMiuix(
+                app = app,
+                rememberGrant = rememberGrant,
+                onRememberChange = { rememberGrant = it },
+                onAllow = { decide(app, granted = true) },
+                onDeny = { decide(app, granted = false) },
+                onDismiss = { pending = null },
+            )
+
+            UiMode.Material -> FakeGrantDialog(
+                app = app,
+                rememberGrant = rememberGrant,
+                onRememberChange = { rememberGrant = it },
+                onAllow = { decide(app, granted = true) },
+                onDeny = { decide(app, granted = false) },
+                onDismiss = { pending = null },
+            )
+        }
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         row(trigger)
     }
+}
+
+@Composable
+private fun FakeAppPickerDialog(
+    pool: List<AppInfo>,
+    onPick: (AppInfo) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.fake_su_pick_title)) },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                items(pool, key = { it.packageName }) { app ->
+                    ListItem(
+                        modifier = Modifier.clickable { onPick(app) },
+                        headlineContent = {
+                            Text(app.label, overflow = TextOverflow.Ellipsis, maxLines = 1)
+                        },
+                        supportingContent = {
+                            Text(
+                                app.packageName,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                            )
+                        },
+                        leadingContent = {
+                            AppIconImage(
+                                packageInfo = app.packageInfo,
+                                label = app.label,
+                                modifier = Modifier.size(40.dp),
+                            )
+                        },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun FakeGrantDialog(
+    app: AppInfo,
+    rememberGrant: Boolean,
+    onRememberChange: (Boolean) -> Unit,
+    onAllow: () -> Unit,
+    onDeny: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            AppIconImage(
+                packageInfo = app.packageInfo,
+                label = app.label,
+                modifier = Modifier.size(48.dp),
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.fake_su_request_title),
+                textAlign = TextAlign.Center,
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.fake_su_request_message, app.label),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = rememberGrant,
+                        onCheckedChange = onRememberChange,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.fake_su_remember))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onAllow) {
+                Text(stringResource(R.string.fake_su_allow))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDeny) {
+                Text(stringResource(R.string.fake_su_deny))
+            }
+        },
+    )
 }
