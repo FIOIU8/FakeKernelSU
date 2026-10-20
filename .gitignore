@@ -9,3 +9,5 @@ captures
 local.properties
 key.jks
 reference/
+
+dist/
