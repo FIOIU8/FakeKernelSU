@@ -15,6 +15,7 @@ import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.repository.SettingsRepository
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.getKernelVersion
 import me.weishu.kernelsu.ksuApp
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
@@ -54,6 +55,11 @@ class HomeViewModel(
         val isRootAvailable = rootAvailable()
         val managerVersion = getManagerVersion(ksuApp)
 
+        // FakeKernelSU: the control panel can override what the home page shows.
+        val deviceModel = FakeState.deviceModelOverride.ifBlank { resolveDeviceName() }
+        val kernelRelease = FakeState.kernelVersionOverride.ifBlank { Os.uname().release }
+        val fingerprint = FakeState.fingerprintOverride.ifBlank { Build.FINGERPRINT }
+
         return HomeUiState(
             kernelVersion = kernelVersion,
             ksuVersion = ksuVersion,
@@ -73,15 +79,16 @@ class HomeViewModel(
             latestVersionInfo = LatestVersionInfo(),
             currentManagerVersionCode = managerVersion.versionCode,
             systemInfo = SystemInfo(
-                kernelVersion = Os.uname().release,
+                kernelVersion = kernelRelease,
                 managerVersion = "${managerVersion.versionName} (${managerVersion.versionCode}-${managerUAPIVersion})",
-                deviceModel = resolveDeviceName(),
-                fingerprint = Build.FINGERPRINT,
+                deviceModel = deviceModel,
+                fingerprint = fingerprint,
                 selinuxStatus = getSELinuxStatusRaw(),
                 seccompStatus = runCatching {
                     Os.prctl(21 /* PR_GET_SECCOMP */, 0, 0, 0, 0)
                 }.getOrDefault(-1),
             ),
+            fakeState = Natives.effectiveState,
         )
     }
 }

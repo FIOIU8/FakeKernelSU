@@ -5,10 +5,21 @@ import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import me.weishu.kernelsu.fake.FakeInstallState
+import me.weishu.kernelsu.fake.FakeProfiles
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.Natives.Profile.RootProfileFlag
 import me.weishu.kernelsu.ui.util.rootAvailable
 
 /**
+ * Fake stand-in for the upstream JNI bridge (libkernelsu.so).
+ *
+ * Upstream, every value here comes from an ioctl() on the kernel-side
+ * [ksu_driver] descriptor. In FakeKernelSU nothing touches the kernel:
+ * everything is served from [FakeState] / [FakeProfiles] in app-private
+ * storage. The API surface is intentionally identical so the rest of the
+ * app compiles and behaves unchanged.
+ *
  * @author weishu
  * @date 2022/12/8.
  */
@@ -31,40 +42,55 @@ object Natives {
     const val ROOT_UID = 0
     const val ROOT_GID = 0
 
-    init {
-        System.loadLibrary("kernelsu")
-    }
+    /** Effective display state, honoring the control-panel override. */
+    val effectiveState: FakeInstallState
+        get() = when (FakeState.stateOverride) {
+            FakeInstallState.AUTO ->
+                if (FakeState.installed) FakeInstallState.INSTALLED else FakeInstallState.NOT_INSTALLED
+            else -> FakeState.stateOverride
+        }
+
+    /** "Is KernelSU installed" — the flag the fake direct-install writes. */
+    val isManager: Boolean
+        get() = effectiveState == FakeInstallState.INSTALLED
 
     val version: Int
-        external get
+        get() = if (isManager) FakeState.ksuVersion else 0
 
     val isSafeMode: Boolean
-        external get
+        get() = false
 
     val isLkmMode: Boolean
-        external get
+        get() = isManager && FakeState.lkmMode == true
 
     val isLkmBundled: Boolean
-        external get
+        get() = true
 
     val isLateLoadMode: Boolean
-        external get
-
-    val isManager: Boolean
-        external get
+        get() = false
 
     val isPrBuild: Boolean
-        external get
+        get() = false
 
-    external fun uidShouldUmount(uid: Int): Boolean
+    fun uidShouldUmount(uid: Int): Boolean {
+        return isDefaultUmountModules()
+    }
 
     /**
      * Get the profile of the given package.
      * @param key usually the package name
      * @return return null if failed.
      */
-    external fun getAppProfile(key: String?, uid: Int): Profile
-    external fun setAppProfile(profile: Profile?): Boolean
+    fun getAppProfile(key: String?, uid: Int): Profile {
+        if (key == null) return Profile()
+        return FakeProfiles.get(key, uid)
+    }
+
+    fun setAppProfile(profile: Profile?): Boolean {
+        if (profile == null) return false
+        FakeProfiles.set(profile)
+        return true
+    }
 
     /**
      * `su` compat mode can be disabled temporarily.
@@ -72,8 +98,14 @@ object Natives {
      *  1: enabled
      *  negative : error
      */
-    external fun isSuEnabled(): Boolean
-    external fun setSuEnabled(enabled: Boolean): Boolean
+    fun isSuEnabled(): Boolean {
+        return FakeState.rootAvailable
+    }
+
+    fun setSuEnabled(enabled: Boolean): Boolean {
+        FakeState.rootAvailable = enabled
+        return true
+    }
 
     /**
      * Kernel module umount can be disabled temporarily.
@@ -81,8 +113,14 @@ object Natives {
      *  1: enabled
      *  negative : error
      */
-    external fun isKernelUmountEnabled(): Boolean
-    external fun setKernelUmountEnabled(enabled: Boolean): Boolean
+    fun isKernelUmountEnabled(): Boolean {
+        return isDefaultUmountModules()
+    }
+
+    fun setKernelUmountEnabled(enabled: Boolean): Boolean {
+        setDefaultUmountModules(enabled)
+        return true
+    }
 
     /**
      * SELinux hide can be disabled temporarily.
@@ -90,15 +128,25 @@ object Natives {
      *  1: enabled
      *  negative : error
      */
-    external fun isSelinuxHideEnabled(): Boolean
-    external fun setSelinuxHideEnabled(enabled: Boolean): Int
+    fun isSelinuxHideEnabled(): Boolean {
+        return true
+    }
+
+    fun setSelinuxHideEnabled(enabled: Boolean): Int {
+        return if (enabled) 1 else 0
+    }
 
     /**
      * Get the user name for the uid.
      */
-    external fun getUserName(uid: Int): String?
+    fun getUserName(uid: Int): String? {
+        return "u0_a${(uid - 10000).coerceAtLeast(0)}"
+    }
 
-    external fun getSuperuserCount(): Int
+    fun getSuperuserCount(): Int {
+        if (!isManager) return 0
+        return FakeProfiles.grantedCount()
+    }
 
     private const val NON_ROOT_DEFAULT_PROFILE_KEY = "$"
     private const val NOBODY_UID = 9999
@@ -121,10 +169,10 @@ object Natives {
     }
 
     val kernelUAPIVersion: Int
-        external get
+        get() = if (isManager) FakeState.kernelUapiVersion else 0
 
     val managerUAPIVersion: Int
-        external get
+        get() = MINIMAL_SUPPORTED_KERNEL
 
     fun isFullFeatured(): Boolean {
         return isManager && kernelUAPIVersion == managerUAPIVersion && rootAvailable()
@@ -137,7 +185,7 @@ object Natives {
     data class Profile(
         // and there is a default profile for root and non-root
         val name: String,
-        // current uid for the package, this is convivent for kernel to check
+        // current uid for the package, this is convinent for kernel to check
         // if the package name doesn't match uid, then it should be invalidated.
         val currentUid: Int = 0,
 
@@ -157,7 +205,6 @@ object Natives {
         val nonRootUseDefault: Boolean = true,
         val umountModules: Boolean = true,
         var rules: String = "", // this field is save in ksud!!
-
         val flags: Long = FLAG_KSU_NO_NEW_PRIVS,
     ) : Parcelable {
         @Keep
@@ -187,4 +234,4 @@ fun List<RootProfileFlag>.toOrdinalList(): List<Int> =
     map { it.ordinal }
 
 fun Long.toRootProfileFlags(): List<RootProfileFlag> =
-    RootProfileFlag.entries.filter { 1L.shl(it.ordinal).and(this) != 0L }.toList()
+    RootProfileFlag.entries.filter { 1L.shl(it.ordinal).and(this) != 0L }

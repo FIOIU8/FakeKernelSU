@@ -72,6 +72,7 @@ import me.weishu.kernelsu.ui.screen.about.AboutScreen
 import me.weishu.kernelsu.ui.screen.appprofile.AppProfileScreen
 import me.weishu.kernelsu.ui.screen.colorpalette.ColorPaletteScreen
 import me.weishu.kernelsu.ui.screen.executemoduleaction.ExecuteModuleActionScreen
+import me.weishu.kernelsu.ui.screen.fakepanel.FakeControlPanelScreen
 import me.weishu.kernelsu.ui.screen.flash.FlashScreen
 import me.weishu.kernelsu.ui.screen.home.HomePager
 import me.weishu.kernelsu.ui.screen.install.InstallScreen
@@ -92,7 +93,6 @@ import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBarBlur
 import me.weishu.kernelsu.ui.theme.LocalEnableNavigationBadge
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.util.getSuperuserCount
-import me.weishu.kernelsu.ui.util.install
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import me.weishu.kernelsu.ui.util.rememberContentReady
 import me.weishu.kernelsu.ui.viewmodel.MainActivityViewModel
@@ -129,8 +129,8 @@ class MainActivity : ComponentActivity() {
             !contentReady || SystemClock.uptimeMillis() - splashStartedAt < splashAnimationDurationMs
         }
 
-        val isManager = Natives.isManager
-        if (isManager && Natives.kernelUAPIVersion == Natives.managerUAPIVersion) install()
+        // FakeKernelSU: upstream ensures the ksud daemon is installed here;
+        // the fake manager has no daemon, so this is intentionally skipped.
 
         if (savedInstanceState == null) intent?.let { intentChannel.trySend(it) }
 
@@ -248,6 +248,9 @@ class MainActivity : ComponentActivity() {
                                         if (navigator.current() == key) scriptRunBackEnabled = enabled
                                     },
                                 )
+                            }
+                            entry<Route.FakePanel>(swipeDismiss = swipeDismiss) {
+                                FakeControlPanelScreen()
                             }
                             entry<Route.Home>(swipeDismiss = swipeDismiss) { mainScreenEntry() }
                             entry<Route.SuperUser>(swipeDismiss = swipeDismiss) { mainScreenEntry() }
