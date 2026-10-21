@@ -41,8 +41,21 @@ jobs:
 
       - name: Install SDK packages
         run: |
+          # The project uses AGP 9's minor-API-level DSL
+          # (compileSdk { version = release(37) { minorApiLevel = 0 } }), so the
+          # platform package is "platforms;android-37.0" - the bare
+          # "platforms;android-37" does not exist in the SDK repository.
+          # Read the values from the root build script so CI tracks the project.
+          COMPILE_SDK=$(grep -oP 'androidCompileSdkVersion"\]\s*=\s*\K[0-9]+' build.gradle.kts | head -1)
+          MINOR=$(grep -oP 'androidCompileSdkVersionMinor"\]\s*=\s*\K[0-9]+' build.gradle.kts | head -1)
+          BUILD_TOOLS=$(grep -oP 'androidBuildToolsVersion"\]\s*=\s*"\K[0-9.]+' build.gradle.kts | head -1)
+          if [ -z "$COMPILE_SDK" ] || [ -z "$MINOR" ] || [ -z "$BUILD_TOOLS" ]; then
+            echo "::error::Failed to read SDK versions from build.gradle.kts"
+            exit 1
+          fi
+          echo "Installing platforms;android-${COMPILE_SDK}.${MINOR} and build-tools;${BUILD_TOOLS}"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platforms;android-37" "build-tools;36.0.0"
+          sdkmanager "platforms;android-${COMPILE_SDK}.${MINOR}" "build-tools;${BUILD_TOOLS}"
 
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon

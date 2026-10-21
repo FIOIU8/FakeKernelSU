@@ -79,8 +79,14 @@ jobs:
 
       - name: Install SDK packages
         run: |
+          # See ci.yml: the platform package carries the minor API level
+          # ("platforms;android-37.0"); read the values from the build script.
+          COMPILE_SDK=$(grep -oP 'androidCompileSdkVersion"\]\s*=\s*\K[0-9]+' build.gradle.kts | head -1)
+          MINOR=$(grep -oP 'androidCompileSdkVersionMinor"\]\s*=\s*\K[0-9]+' build.gradle.kts | head -1)
+          BUILD_TOOLS=$(grep -oP 'androidBuildToolsVersion"\]\s*=\s*"\K[0-9.]+' build.gradle.kts | head -1)
+          echo "Installing platforms;android-${COMPILE_SDK}.${MINOR} and build-tools;${BUILD_TOOLS}"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platforms;android-37" "build-tools;36.0.0"
+          sdkmanager "platforms;android-${COMPILE_SDK}.${MINOR}" "build-tools;${BUILD_TOOLS}"
 
       # Optional release signing. Configure the repository secrets below to
       # sign with a real certificate; without them the APK is signed with the
