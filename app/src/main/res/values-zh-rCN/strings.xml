@@ -438,4 +438,16 @@
     <string name="fake_su_deny">拒绝</string>
     <string name="fake_su_granted_toast">已授权 %1$s 获取 root</string>
     <string name="fake_su_denied_toast">已拒绝 %1$s</string>
+
+    <!-- FakeKernelSU: 版本与系统信息覆盖 -->
+    <string name="fake_panel_ksu_version">KSU 版本号</string>
+    <string name="fake_panel_ksu_version_summary">显示为工作版本</string>
+    <string name="fake_panel_manager_version_code">管理器版本号</string>
+    <string name="fake_panel_manager_version_code_summary">用于更新检测;空 = 真实值</string>
+    <string name="fake_panel_manager_version_name">管理器版本名</string>
+    <string name="fake_panel_manager_version_name_summary">首页显示;空 = 真实值</string>
+    <string name="fake_panel_compare_value">当前比较值 = %1$d</string>
+    <string name="fake_panel_selinux_mode">SELinux 模式</string>
+    <string name="fake_panel_seccomp_status">Seccomp 状态</string>
+    <string name="fake_follow_system">跟随系统</string>
 </resources>
