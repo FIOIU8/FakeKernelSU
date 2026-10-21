@@ -224,6 +224,19 @@ object FakeState {
         mutableStateOf(prefs.getBoolean(KEY_STEALTH, false))
     }
 
+    /**
+     * Simulated "a newer bundled LKM is available" banner on the home page.
+     *
+     * Upstream derives this from `ksuVersion != managerVersionCode`, which
+     * cannot work here: the demo's kernel version is a hand-made number while
+     * the manager versionCode comes from the APK build, so the two never match
+     * and the banner would show up permanently. The lab drives it explicitly
+     * instead, defaulting to off.
+     */
+    var lkmUpdateAvailable: Boolean
+        get() = prefs.getBoolean(KEY_LKM_UPDATE, false)
+        set(value) = prefs.edit().putBoolean(KEY_LKM_UPDATE, value).apply()
+
     // --------------------------------------------------------- feature status
 
     /**
@@ -313,6 +326,7 @@ object FakeState {
     private const val KEY_IN_APP_NAME = "in_app_name"
     private const val KEY_BRAND_NAME = "brand_name"
     private const val KEY_STEALTH = "stealth_mode"
+    private const val KEY_LKM_UPDATE = "lkm_update_available"
     private const val KEY_SU_MODE = "su_request_mode"
     private const val KEY_FEATURE_STATUS = "feature_status"
 

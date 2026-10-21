@@ -402,6 +402,8 @@
     <string name="fake_panel_state_unsupported_summary">内核不受支持,仅显示基础功能</string>
     <string name="fake_panel_root">Root 已获取</string>
     <string name="fake_panel_root_summary">关闭后管理器显示"root 获取失败"但状态仍为已安装(混合状态)</string>
+    <string name="fake_panel_lkm_update">内嵌 LKM 更新提示</string>
+    <string name="fake_panel_lkm_update_summary">在首页显示"内嵌 LKM 有可用更新"提示(LKM 模式下生效)</string>
     <string name="fake_panel_version">管理器版本号</string>
     <string name="fake_panel_version_hint">版本号,例如 13000</string>
     <string name="fake_panel_lkm">LKM 模式</string>

@@ -91,6 +91,7 @@ class HomeViewModel(
                 }.getOrDefault(-1),
             ),
             fakeState = Natives.effectiveState,
+            lkmUpdateAvailable = FakeState.lkmUpdateAvailable,
         )
     }
 }

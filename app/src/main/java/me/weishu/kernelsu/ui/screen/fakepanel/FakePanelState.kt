@@ -66,6 +66,7 @@ class FakePanelState {
     var suRequestMode by mutableStateOf(FakeState.suRequestMode)
     var stealthMode by mutableStateOf(FakeState.stealthMode)
     var featureStatus by mutableStateOf(FakeState.featureStatusOverride)
+    var lkmUpdateAvailable by mutableStateOf(FakeState.lkmUpdateAvailable)
     var showWipeDialog by mutableStateOf(false)
 
     fun selectInstallState(entry: FakeInstallState) {
@@ -182,6 +183,11 @@ class FakePanelState {
         FakeState.featureStatusOverride = value
     }
 
+    fun updateLkmUpdateAvailable(value: Boolean) {
+        lkmUpdateAvailable = value
+        FakeState.lkmUpdateAvailable = value
+    }
+
     fun resetToDefaults() {
         FakeState.resetAll()
         applyLauncherAlias(LauncherAlias.FAKE)
@@ -201,6 +207,7 @@ class FakePanelState {
         brandName = ""
         stealthMode = false
         featureStatus = FakeState.FEATURE_STATUS_SUPPORTED
+        lkmUpdateAvailable = false
         launcherAlias = LauncherAlias.FAKE
         suRequestMode = FakeSuRequestMode.PICK_APP
     }

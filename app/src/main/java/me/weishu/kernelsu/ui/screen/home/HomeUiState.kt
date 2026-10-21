@@ -27,6 +27,13 @@ data class HomeUiState(
     val systemInfo: SystemInfo,
     /** FakeKernelSU: effective display state from the control panel. */
     val fakeState: FakeInstallState = FakeInstallState.AUTO,
+    /**
+     * FakeKernelSU: the lab decides whether "a newer bundled LKM is available"
+     * is shown. Upstream compares [ksuVersion] with [currentManagerVersionCode],
+     * which always differ here (hand-made kernel version vs. real APK
+     * versionCode) and would pin the banner on screen forever.
+     */
+    val lkmUpdateAvailable: Boolean = false,
 ) {
     val isSELinuxPermissive: Boolean
         get() = systemInfo.selinuxStatus == "Permissive"
@@ -37,8 +44,7 @@ data class HomeUiState(
     val showLkmUpdate: Boolean
         get() = isManager &&
                 lkmMode == true &&
-                isLkmBundled &&
-                ksuVersion?.toLong() != currentManagerVersionCode &&
+                lkmUpdateAvailable &&
                 !requiresNewKernel &&
                 !requiresNewManager
 
