@@ -34,6 +34,7 @@ import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.util.BlurredBar
+import me.weishu.kernelsu.ui.util.fakeStr
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
@@ -85,7 +86,7 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
             BlurredBar(backdrop) {
                 TopAppBar(
                     color = barColor,
-                    title = stringResource(R.string.fake_panel_title),
+                    title = fakeStr(R.string.fake_panel_title),
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(
@@ -172,21 +173,13 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(start = 16.dp, top = 8.dp),
                         )
-                        RadioButtonPreference(
-                            title = stringResource(R.string.fake_panel_lkm_gki),
-                            selected = state.lkmMode == null,
-                            onClick = { state.updateLkmMode(null) },
-                        )
-                        RadioButtonPreference(
-                            title = stringResource(R.string.fake_panel_lkm_lkm),
-                            selected = state.lkmMode == true,
-                            onClick = { state.updateLkmMode(true) },
-                        )
-                        RadioButtonPreference(
-                            title = stringResource(R.string.fake_panel_lkm_none),
-                            selected = state.lkmMode == false,
-                            onClick = { state.updateLkmMode(false) },
-                        )
+                        FakeWorkingMode.entries.forEach { mode ->
+                            RadioButtonPreference(
+                                title = stringResource(mode.labelRes()),
+                                selected = state.workingMode == mode,
+                                onClick = { state.selectWorkingMode(mode) },
+                            )
+                        }
                     }
 
                     // ------------------------------------------ home overrides
@@ -249,6 +242,22 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                         }
                         Spacer(Modifier.height(8.dp))
                         EditText(
+                            title = stringResource(R.string.fake_panel_brand),
+                            value = state.brandName,
+                            onValueChange = { state.updateBrandName(it) },
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.fake_panel_brand_in_use,
+                                state.brandName.ifBlank {
+                                    state.inAppName.ifBlank { stringResource(R.string.app_name) }
+                                },
+                            ),
+                            fontSize = 13.sp,
+                            color = colorScheme.onSurfaceVariantSummary,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                        )
+                        EditText(
                             title = stringResource(R.string.fake_panel_in_app_name),
                             value = state.inAppName,
                             onValueChange = { state.updateInAppName(it) },
@@ -307,7 +316,7 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                     }
 
                     Text(
-                        text = stringResource(R.string.fake_panel_disclaimer),
+                        text = fakeStr(R.string.fake_panel_disclaimer),
                         fontSize = 13.sp,
                         color = colorScheme.onSurfaceVariantSummary,
                         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),

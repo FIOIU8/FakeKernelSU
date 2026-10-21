@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.filled.Check
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.CheckableDropdownMenuItem
 import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -95,6 +95,12 @@ fun SuperUserPagerMaterial(
 
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
+    // FakeKernelSU: the su-request simulation now lives in the overflow menu,
+    // so its flow is owned here instead of being a list row.
+    val fakeSuRequest = rememberFakeSuRequestController(
+        uiState = uiState,
+        onRefresh = actions.onRefresh,
+    )
 
     ExpressiveScaffold(
         topBar = {
@@ -242,6 +248,28 @@ fun SuperUserPagerMaterial(
                                     )
                                 }
                             }
+
+                            Spacer(Modifier.height(MenuDefaults.GroupSpacing))
+
+                            // FakeKernelSU: simulate a root request (moved out of
+                            // the list so the first row is a real app).
+                            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 1)) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.fake_su_trigger)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Terminal,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                        )
+                                    },
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                        fakeSuRequest.trigger()
+                                        showDropdown = false
+                                    },
+                                )
+                            }
                         }
                     }
                 },
@@ -357,34 +385,6 @@ fun SuperUserPagerMaterial(
                     bottom = 16.dp + bottomInnerPadding
                 ),
             ) {
-                item(key = "fake-su-request") {
-                    FakeSuRequestHost(
-                        uiState = uiState,
-                        onRefresh = actions.onRefresh,
-                    ) { onClick ->
-                        SegmentedListItem(
-                            selected = false,
-                            onClick = onClick,
-                            headlineContent = { Text(stringResource(R.string.fake_su_trigger)) },
-                            supportingContent = { Text(stringResource(R.string.fake_su_trigger_summary)) },
-                            leadingContent = {
-                                Icon(
-                                    Icons.Filled.Terminal,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .padding(4.dp),
-                                )
-                            },
-                            trailingContent = {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                }
                 itemsIndexed(uiState.groupedApps, key = { _, item -> item.uid }) { index, group ->
                     val expanded = expandedSearchUids.value.contains(group.uid)
                     val onToggleExpand = {
@@ -424,6 +424,8 @@ fun SuperUserPagerMaterial(
             }
         }
     }
+
+    fakeSuRequest.Dialogs()
 }
 
 @Composable

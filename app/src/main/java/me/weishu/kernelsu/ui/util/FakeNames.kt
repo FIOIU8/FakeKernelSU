@@ -9,11 +9,20 @@ import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.LauncherAlias
 import me.weishu.kernelsu.ksuApp
 
-/** The name shown inside the app (top bars, about page). */
+/**
+ * The name shown inside the app (top bars, about page).
+ *
+ * Priority: explicit in-app name -> brand name -> app label. Keeping the
+ * in-app name first preserves the previous behavior, while a brand-only
+ * override (#12) still reaches the title.
+ */
 @Composable
 fun fakeAppName(): String {
     val override = FakeState.inAppName
-    return if (override.isBlank()) stringResource(R.string.app_name) else override
+    if (override.isNotBlank()) return override
+    val brand = FakeState.brandName
+    if (brand.isNotBlank()) return brand
+    return stringResource(R.string.app_name)
 }
 
 /**

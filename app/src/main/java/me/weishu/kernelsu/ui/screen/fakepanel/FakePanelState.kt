@@ -18,6 +18,19 @@ import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.util.applyLauncherAlias
 
 /**
+ * The lab's mutually exclusive "how root is provided" selector. It is a UI
+ * concept only: GKI/LKM map onto [FakeState.lkmMode], jailbreak additionally
+ * sets [FakeState.jailbreakMode] (late-load implies LKM).
+ */
+enum class FakeWorkingMode {
+    GKI,
+    LKM,
+    NONE,
+    JAILBREAK,
+    ;
+}
+
+/**
  * Every value the control panel can tweak, plus the mutations that persist
  * them into [FakeState].
  *
@@ -33,6 +46,7 @@ class FakePanelState {
     )
     var managerVersionName by mutableStateOf(FakeState.managerVersionNameOverride)
     var lkmMode by mutableStateOf(FakeState.lkmMode)
+    var jailbreakMode by mutableStateOf(FakeState.jailbreakMode)
     var deviceModel by mutableStateOf(FakeState.deviceModelOverride)
     var kernelVersion by mutableStateOf(FakeState.kernelVersionOverride)
     var fingerprint by mutableStateOf(FakeState.fingerprintOverride)
@@ -40,6 +54,7 @@ class FakePanelState {
     var seccompMode by mutableStateOf(FakeState.seccompMode)
     var launcherAlias by mutableStateOf(LauncherAlias.fromName(FakeState.launcherAlias))
     var inAppName by mutableStateOf(FakeState.inAppName)
+    var brandName by mutableStateOf(FakeState.brandName)
     var suRequestMode by mutableStateOf(FakeState.suRequestMode)
     var stealthMode by mutableStateOf(FakeState.stealthMode)
     var unlockTaps by mutableIntStateOf(FakeState.unlockTapCount)
@@ -66,6 +81,32 @@ class FakePanelState {
     fun updateLkmMode(value: Boolean?) {
         lkmMode = value
         FakeState.lkmMode = value
+    }
+
+    val workingMode: FakeWorkingMode
+        get() = when {
+            jailbreakMode -> FakeWorkingMode.JAILBREAK
+            lkmMode == true -> FakeWorkingMode.LKM
+            lkmMode == false -> FakeWorkingMode.NONE
+            else -> FakeWorkingMode.GKI
+        }
+
+    fun selectWorkingMode(mode: FakeWorkingMode) {
+        if (mode == FakeWorkingMode.JAILBREAK) {
+            FakeState.applyJailbreak()
+            jailbreakMode = true
+            lkmMode = FakeState.lkmMode
+            return
+        }
+        FakeState.clearJailbreak()
+        jailbreakMode = false
+        updateLkmMode(
+            when (mode) {
+                FakeWorkingMode.LKM -> true
+                FakeWorkingMode.NONE -> false
+                else -> null
+            }
+        )
     }
 
     fun updateManagerVersionCode(input: String) {
@@ -114,6 +155,11 @@ class FakePanelState {
         FakeState.inAppName = value
     }
 
+    fun updateBrandName(value: String) {
+        brandName = value
+        FakeState.brandName = value
+    }
+
     fun selectSuRequestMode(entry: FakeSuRequestMode) {
         suRequestMode = entry
         FakeState.suRequestMode = entry
@@ -139,12 +185,14 @@ class FakePanelState {
         managerVersionCode = ""
         managerVersionName = ""
         lkmMode = null
+        jailbreakMode = false
         deviceModel = ""
         kernelVersion = ""
         fingerprint = ""
         selinuxMode = FakeSelinuxMode.SYSTEM
         seccompMode = FakeSeccompMode.SYSTEM
         inAppName = ""
+        brandName = ""
         stealthMode = false
         unlockTaps = 7
         sliderValue = 7f

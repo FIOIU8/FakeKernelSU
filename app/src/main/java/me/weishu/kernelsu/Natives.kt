@@ -67,8 +67,9 @@ object Natives {
     val isLkmBundled: Boolean
         get() = true
 
+    /** Late-load / jailbreak: only meaningful when the manager is "installed". */
     val isLateLoadMode: Boolean
-        get() = false
+        get() = isManager && FakeState.jailbreakMode
 
     val isPrBuild: Boolean
         get() = false
