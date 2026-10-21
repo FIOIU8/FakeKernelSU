@@ -83,8 +83,10 @@ class HomeViewModel(
                 managerVersion = "${managerVersion.versionName} (${managerVersion.versionCode}-${managerUAPIVersion})",
                 deviceModel = deviceModel,
                 fingerprint = fingerprint,
-                selinuxStatus = getSELinuxStatusRaw(),
-                seccompStatus = runCatching {
+                // FakeKernelSU: SYSTEM keeps the real device value; anything else
+                // is the lab override.
+                selinuxStatus = FakeState.selinuxMode.rawValue ?: getSELinuxStatusRaw(),
+                seccompStatus = FakeState.seccompMode.rawValue ?: runCatching {
                     Os.prctl(21 /* PR_GET_SECCOMP */, 0, 0, 0, 0)
                 }.getOrDefault(-1),
             ),

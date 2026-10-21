@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import me.weishu.kernelsu.fake.FakeInstallState
+import me.weishu.kernelsu.fake.FakeSeccompMode
+import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
@@ -26,10 +28,16 @@ class FakePanelState {
     var stateOverride by mutableStateOf(FakeState.stateOverride)
     var rootAvailable by mutableStateOf(FakeState.rootAvailable)
     var ksuVersion by mutableStateOf(FakeState.ksuVersion.toString())
+    var managerVersionCode by mutableStateOf(
+        FakeState.managerVersionCodeOverride.takeIf { it > 0L }?.toString() ?: ""
+    )
+    var managerVersionName by mutableStateOf(FakeState.managerVersionNameOverride)
     var lkmMode by mutableStateOf(FakeState.lkmMode)
     var deviceModel by mutableStateOf(FakeState.deviceModelOverride)
     var kernelVersion by mutableStateOf(FakeState.kernelVersionOverride)
     var fingerprint by mutableStateOf(FakeState.fingerprintOverride)
+    var selinuxMode by mutableStateOf(FakeState.selinuxMode)
+    var seccompMode by mutableStateOf(FakeState.seccompMode)
     var launcherAlias by mutableStateOf(LauncherAlias.fromName(FakeState.launcherAlias))
     var inAppName by mutableStateOf(FakeState.inAppName)
     var suRequestMode by mutableStateOf(FakeState.suRequestMode)
@@ -58,6 +66,26 @@ class FakePanelState {
     fun updateLkmMode(value: Boolean?) {
         lkmMode = value
         FakeState.lkmMode = value
+    }
+
+    fun updateManagerVersionCode(input: String) {
+        managerVersionCode = input.filter { it.isDigit() }.take(9)
+        FakeState.managerVersionCodeOverride = managerVersionCode.toLongOrNull() ?: 0L
+    }
+
+    fun updateManagerVersionName(value: String) {
+        managerVersionName = value
+        FakeState.managerVersionNameOverride = value
+    }
+
+    fun selectSelinuxMode(entry: FakeSelinuxMode) {
+        selinuxMode = entry
+        FakeState.selinuxMode = entry
+    }
+
+    fun selectSeccompMode(entry: FakeSeccompMode) {
+        seccompMode = entry
+        FakeState.seccompMode = entry
     }
 
     fun updateDeviceModel(value: String) {
@@ -108,10 +136,14 @@ class FakePanelState {
         stateOverride = FakeInstallState.AUTO
         rootAvailable = true
         ksuVersion = FakeState.ksuVersion.toString()
+        managerVersionCode = ""
+        managerVersionName = ""
         lkmMode = null
         deviceModel = ""
         kernelVersion = ""
         fingerprint = ""
+        selinuxMode = FakeSelinuxMode.SYSTEM
+        seccompMode = FakeSeccompMode.SYSTEM
         inAppName = ""
         stealthMode = false
         unlockTaps = 7

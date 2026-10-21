@@ -32,6 +32,38 @@ enum class FakeSuRequestMode {
 }
 
 /**
+ * SELinux mode shown on the home page. [SYSTEM] keeps the real `getenforce`
+ * result, everything else is a fake override.
+ */
+enum class FakeSelinuxMode(val rawValue: String?) {
+    SYSTEM(null),
+    ENFORCING("Enforcing"),
+    PERMISSIVE("Permissive"),
+    DISABLED("Disabled"),
+    ;
+
+    companion object {
+        fun fromName(name: String?): FakeSelinuxMode =
+            entries.firstOrNull { it.name == name } ?: SYSTEM
+    }
+}
+
+/** Seccomp status shown on the home page; `null` = read the real prctl value. */
+enum class FakeSeccompMode(val rawValue: Int?) {
+    SYSTEM(null),
+    NOT_SUPPORTED(-1),
+    DISABLED(0),
+    STRICT(1),
+    FILTER(2),
+    ;
+
+    companion object {
+        fun fromName(name: String?): FakeSeccompMode =
+            entries.firstOrNull { it.name == name } ?: SYSTEM
+    }
+}
+
+/**
  * Single source of truth for every piece of fake state.
  *
  * Everything lives in the app's private storage:
@@ -117,6 +149,29 @@ object FakeState {
         get() = prefs.getString(KEY_FINGERPRINT, "") ?: ""
         set(value) = prefs.edit().putString(KEY_FINGERPRINT, value).apply()
 
+    var selinuxMode: FakeSelinuxMode
+        get() = FakeSelinuxMode.fromName(prefs.getString(KEY_SELINUX_MODE, null))
+        set(value) = prefs.edit().putString(KEY_SELINUX_MODE, value.name).apply()
+
+    var seccompMode: FakeSeccompMode
+        get() = FakeSeccompMode.fromName(prefs.getString(KEY_SECCOMP_MODE, null))
+        set(value) = prefs.edit().putString(KEY_SECCOMP_MODE, value.name).apply()
+
+    // ------------------------------------------------ manager version overrides
+
+    /**
+     * Update check compares against this value. `0` = use the real APK
+     * versionCode.
+     */
+    var managerVersionCodeOverride: Long
+        get() = prefs.getLong(KEY_MANAGER_VERSION_CODE, 0L)
+        set(value) = prefs.edit().putLong(KEY_MANAGER_VERSION_CODE, value).apply()
+
+    /** Version name shown on the home page. Empty = use the real value. */
+    var managerVersionNameOverride: String
+        get() = prefs.getString(KEY_MANAGER_VERSION_NAME, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_MANAGER_VERSION_NAME, value).apply()
+
     // ----------------------------------------------------------- app naming
 
     /** Launcher label preset, see LauncherAlias enum. */
@@ -200,6 +255,10 @@ object FakeState {
     private const val KEY_DEVICE_MODEL = "device_model"
     private const val KEY_KERNEL_VERSION = "kernel_version"
     private const val KEY_FINGERPRINT = "fingerprint"
+    private const val KEY_SELINUX_MODE = "selinux_mode"
+    private const val KEY_SECCOMP_MODE = "seccomp_mode"
+    private const val KEY_MANAGER_VERSION_CODE = "manager_version_code"
+    private const val KEY_MANAGER_VERSION_NAME = "manager_version_name"
     private const val KEY_LAUNCHER_ALIAS = "launcher_alias"
     private const val KEY_IN_APP_NAME = "in_app_name"
     private const val KEY_STEALTH = "stealth_mode"

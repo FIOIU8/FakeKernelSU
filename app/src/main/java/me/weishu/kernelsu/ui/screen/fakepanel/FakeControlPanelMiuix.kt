@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.fake.FakeInstallState
+import me.weishu.kernelsu.fake.FakeSeccompMode
+import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
@@ -45,6 +47,7 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 import top.yukonga.miuix.kmp.preference.SliderPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -141,6 +144,27 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             onValueChange = { state.updateKsuVersion(it) },
                             textHint = "13000",
                         )
+                        EditText(
+                            title = stringResource(R.string.fake_panel_manager_version_code),
+                            value = state.managerVersionCode,
+                            onValueChange = { state.updateManagerVersionCode(it) },
+                        )
+                        EditText(
+                            title = stringResource(R.string.fake_panel_manager_version_name),
+                            value = state.managerVersionName,
+                            onValueChange = { state.updateManagerVersionName(it) },
+                        )
+                        if (state.managerVersionCode.isNotBlank()) {
+                            Text(
+                                text = stringResource(
+                                    R.string.fake_panel_compare_value,
+                                    state.managerVersionCode.toLongOrNull() ?: 0L,
+                                ),
+                                fontSize = 13.sp,
+                                color = colorScheme.onSurfaceVariantSummary,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                        }
                         Spacer(Modifier.height(8.dp))
                         Text(
                             text = stringResource(R.string.fake_panel_lkm),
@@ -187,6 +211,24 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             title = stringResource(R.string.home_fingerprint),
                             value = state.fingerprint,
                             onValueChange = { state.updateFingerprint(it) },
+                        )
+                        OverlayDropdownPreference(
+                            title = stringResource(R.string.fake_panel_selinux_mode),
+                            summary = stringResource(state.selinuxMode.labelRes()),
+                            items = FakeSelinuxMode.entries.map { stringResource(it.labelRes()) },
+                            selectedIndex = FakeSelinuxMode.entries.indexOf(state.selinuxMode),
+                            onSelectedIndexChange = {
+                                state.selectSelinuxMode(FakeSelinuxMode.entries[it])
+                            },
+                        )
+                        OverlayDropdownPreference(
+                            title = stringResource(R.string.fake_panel_seccomp_status),
+                            summary = stringResource(state.seccompMode.labelRes()),
+                            items = FakeSeccompMode.entries.map { stringResource(it.labelRes()) },
+                            selectedIndex = FakeSeccompMode.entries.indexOf(state.seccompMode),
+                            onSelectedIndexChange = {
+                                state.selectSeccompMode(FakeSeccompMode.entries[it])
+                            },
                         )
                     }
 
