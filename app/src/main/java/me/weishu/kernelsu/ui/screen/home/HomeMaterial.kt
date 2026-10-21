@@ -53,7 +53,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
@@ -135,7 +137,7 @@ fun HomePagerMaterial(
                 state = state,
                 actions = actions,
             )
-            InfoCard(systemInfo = state.systemInfo)
+            InfoCard(systemInfo = state.systemInfo, onEditField = actions.onEditField)
             SupportLinks(onOpenUrl = actions.onOpenUrl)
             Spacer(
                 Modifier.height(
@@ -397,17 +399,25 @@ private fun SupportLinks(
 @Composable
 private fun InfoCard(
     systemInfo: SystemInfo,
+    onEditField: (SystemInfoField) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     @Composable
     fun InfoCardItem(
         icon: ImageVector,
         label: String,
         content: String,
+        field: SystemInfoField,
         modifier: Modifier = Modifier,
     ) {
         SegmentedListItem(
             modifier = modifier,
+            onLongClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onEditField(field)
+            },
             headlineContent = { Text(text = label, style = MaterialTheme.typography.bodyLarge) },
             leadingContent = { Icon(imageVector = icon, contentDescription = label) },
             supportingContent = {
@@ -444,6 +454,7 @@ private fun InfoCard(
                     icon = Icons.Filled.Tag,
                     label = stringResource(R.string.home_manager_version),
                     content = systemInfo.managerVersion,
+                    field = SystemInfoField.MANAGER_VERSION,
                 )
             }
             item {
@@ -451,6 +462,7 @@ private fun InfoCard(
                     icon = Icons.Filled.DeveloperBoard,
                     label = stringResource(R.string.home_kernel),
                     content = systemInfo.kernelVersion,
+                    field = SystemInfoField.KERNEL,
                 )
             }
             item {
@@ -458,6 +470,7 @@ private fun InfoCard(
                     icon = Icons.Filled.Smartphone,
                     label = stringResource(R.string.home_device_model),
                     content = systemInfo.deviceModel,
+                    field = SystemInfoField.DEVICE_MODEL,
                 )
             }
             item {
@@ -465,6 +478,7 @@ private fun InfoCard(
                     icon = Icons.Filled.Fingerprint,
                     label = stringResource(R.string.home_fingerprint),
                     content = systemInfo.fingerprint,
+                    field = SystemInfoField.FINGERPRINT,
                 )
             }
         }
@@ -474,6 +488,7 @@ private fun InfoCard(
                     icon = Icons.Filled.Security,
                     label = stringResource(R.string.home_selinux_status),
                     content = selinuxDisplay,
+                    field = SystemInfoField.SELINUX,
                 )
             }
             item {
@@ -481,6 +496,7 @@ private fun InfoCard(
                     icon = Icons.Filled.FilterList,
                     label = stringResource(R.string.home_seccomp_status),
                     content = seccompDisplay,
+                    field = SystemInfoField.SECCOMP,
                 )
             }
         }
@@ -557,7 +573,7 @@ private fun HomeScreenPreviewContent(
                 ),
                 actions = actions
             )
-            InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus))
+            InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus), onEditField = {})
             SupportLinks(onOpenUrl = {})
         }
     }
