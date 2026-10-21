@@ -455,9 +455,9 @@
     <string name="fake_follow_system">跟随系统</string>
 
     <!-- FakeKernelSU: 越狱模式 -->
-    <string name="fake_jailbreak_confirm">进入越狱模式?\n\n将模拟运行期获取 root(late-load),重启后失效。</string>
+    <string name="fake_jailbreak_confirm">进入越狱模式?\n\n将在运行期获取 root(late-load),重启后失效,需要重新越狱。</string>
     <string name="fake_jailbreak_enabled">越狱模式已生效</string>
-    <string name="fake_jailbreak_rebooted">已模拟重启:越狱模式已退出</string>
+    <string name="fake_jailbreak_rebooted">越狱模式已退出</string>
 
     <!-- FakeKernelSU: 品牌名 -->
     <string name="fake_panel_brand">品牌名</string>
