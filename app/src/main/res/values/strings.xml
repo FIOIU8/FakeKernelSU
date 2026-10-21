@@ -461,9 +461,9 @@
     <string name="fake_follow_system">Follow system</string>
 
     <!-- FakeKernelSU: jailbreak mode -->
-    <string name="fake_jailbreak_confirm">Enter jailbreak mode?\n\nThis simulates acquiring root at runtime (late-load). The mode is lost after a reboot.</string>
+    <string name="fake_jailbreak_confirm">Enter jailbreak mode?\n\nRoot access is acquired at runtime (late-load). A reboot clears it, and the device has to be jailbroken again.</string>
     <string name="fake_jailbreak_enabled">Jailbreak mode is now active</string>
-    <string name="fake_jailbreak_rebooted">Simulated reboot: jailbreak mode has been exited</string>
+    <string name="fake_jailbreak_rebooted">Jailbreak mode has been exited</string>
 
     <!-- FakeKernelSU: brand name -->
     <string name="fake_panel_brand">Brand name</string>
