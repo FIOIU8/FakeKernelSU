@@ -72,6 +72,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # See ci.yml: the default "tools" package no longer exists in the
+          # Android SDK repository, which makes sdkmanager exit 1.
+          packages: platform-tools
 
       - name: Install SDK packages
         run: |
