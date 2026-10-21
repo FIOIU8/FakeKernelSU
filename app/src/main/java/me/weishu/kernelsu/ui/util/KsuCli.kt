@@ -343,6 +343,21 @@ fun downloadBoot(
     return FlashResult(-1, "Unsupported in FakeKernelSU", false)
 }
 
+/**
+ * Result of probing a remote factory/OTA image for boot partitions.
+ * Upstream this comes from the (deleted) image extractor.
+ */
+data class ProbeResult(val partitions: List<String>, val kmi: String?)
+
+/**
+ * R2: the download entry point stays as upstream ships it, but the demo never
+ * parses a payload — returning no partitions makes the normal flow show
+ * "no boot partition found" instead of pretending to succeed.
+ */
+suspend fun probeRemoteBootPartitions(url: String): ProbeResult =
+    ProbeResult(partitions = emptyList(), kmi = null)
+
+
 
 
 
