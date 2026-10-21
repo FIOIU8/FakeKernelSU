@@ -73,6 +73,7 @@ import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopup
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.util.fakeAppName
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
 
 @Composable
 fun HomePagerMaterial(
@@ -83,7 +84,7 @@ fun HomePagerMaterial(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     ExpressiveScaffold(
-        topBar = { TopBar(scrollBehavior = scrollBehavior) },
+        topBar = { TopBar(scrollBehavior = scrollBehavior, onUnlockPanel = actions.onUnlockPanel) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { innerPadding ->
         Column(
@@ -181,10 +182,12 @@ private fun UpdateCard(
 
 @Composable
 private fun TopBar(
+    onUnlockPanel: () -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
+    val unlockModifier = rememberFakeUnlockTapModifier(onUnlockPanel)
     LargeFlexibleTopAppBar(
-        title = { Text(fakeAppName()) },
+        title = { Text(fakeAppName(), modifier = Modifier.then(unlockModifier)) },
         actions = { RebootListPopup() },
         colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),

@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.Natives
+import me.weishu.kernelsu.fake.FakeFeatures
 import me.weishu.kernelsu.fake.FakeModules
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ksuApp
@@ -38,8 +39,6 @@ import java.util.zip.ZipFile
  * no kernel. The public API is kept identical so the UI layer is untouched.
  */
 private const val TAG = "KsuCli"
-
-private const val FEATURES_FILE = "features.json"
 
 data class FlashResult(val code: Int, val err: String, val showReboot: Boolean)
 
@@ -93,30 +92,11 @@ fun rootAvailable(): Boolean = FakeState.rootAvailable
 
 // ------------------------------------------------------------------ features
 
-private fun featuresFile(): File {
-    FakeState.ensureDirs()
-    return File(FakeState.ksuDir, FEATURES_FILE)
-}
+private fun readFeatures(): JSONObject = FakeFeatures.read()
 
-private fun readFeatures(): JSONObject {
-    val file = featuresFile()
-    if (!file.exists()) return JSONObject()
-    return runCatching { JSONObject(file.readText()) }.getOrDefault(JSONObject())
-}
+private fun writeFeatures(features: JSONObject) = FakeFeatures.write(features)
 
-private fun writeFeatures(features: JSONObject) {
-    runCatching { featuresFile().writeText(features.toString()) }
-}
-
-private fun defaultFeatureValue(feature: String): Long = when (feature) {
-    "su_compat" -> 1L
-    "kernel_umount" -> 1L
-    "selinux_hide" -> 1L
-    "sulog" -> 1L
-    "adb_root" -> 0L
-    "shell_su_adb_only" -> 0L
-    else -> 0L
-}
+private fun defaultFeatureValue(feature: String): Long = FakeFeatures.defaultValue(feature)
 
 /**
  * Emulates `ksud feature ...`. Recognized forms:
@@ -139,8 +119,11 @@ fun execKsud(args: String, newShell: Boolean = false, globalMnt: Boolean = false
 }
 
 suspend fun getFeatureStatus(feature: String): String = withContext(Dispatchers.IO) {
-    // "managed" is the healthy upstream status; unsupported/forced are warnings.
-    "managed"
+    // Upstream parses `ksud feature check <name>` here. The demo has no LKM to
+    // take a feature over, so every feature is user-controllable — except when
+    // the lab deliberately simulates "managed"/"unsupported" to show the
+    // greyed-out state.
+    FakeState.featureStatusOverride
 }
 
 suspend fun getFeaturePersistValue(feature: String): Long? = withContext(Dispatchers.IO) {

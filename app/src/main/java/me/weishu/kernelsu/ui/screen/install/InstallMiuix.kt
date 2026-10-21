@@ -93,13 +93,6 @@ fun InstallScreenMiuix(
                 overscrollEffect = null,
             ) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = stringResource(R.string.fake_install_desc),
-                            modifier = Modifier.padding(16.dp),
-                            color = colorScheme.onSurfaceVariantSummary,
-                        )
-                    }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

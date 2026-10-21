@@ -68,6 +68,7 @@ import me.weishu.kernelsu.ui.util.BlurredBar
 import me.weishu.kernelsu.ui.util.fakeAppName
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
@@ -106,6 +107,7 @@ fun HomePagerMiuix(
                 scrollBehavior = scrollBehavior,
                 backdrop = backdrop,
                 barColor = barColor,
+                onUnlockPanel = actions.onUnlockPanel,
             )
         },
         popupHost = { },
@@ -228,16 +230,31 @@ private fun TopBar(
     scrollBehavior: ScrollBehavior,
     backdrop: LayerBackdrop?,
     barColor: Color,
+    onUnlockPanel: () -> Unit = {},
 ) {
+    val unlockModifier = rememberFakeUnlockTapModifier(onUnlockPanel)
     BlurredBar(backdrop) {
-        TopAppBar(
-            color = barColor,
-            title = fakeAppName(),
-            actions = {
-                RebootListPopupMiuix()
-            },
-            scrollBehavior = scrollBehavior
-        )
+        Box {
+            TopAppBar(
+                color = barColor,
+                title = fakeAppName(),
+                actions = {
+                    RebootListPopupMiuix()
+                },
+                scrollBehavior = scrollBehavior
+            )
+            // Miuix's TopAppBar takes a plain String title and its own bar
+            // gestures eat taps, so the unlock gesture lives on a transparent
+            // hot zone over the title area instead.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp)
+                    .width(220.dp)
+                    .fillMaxHeight()
+                    .then(unlockModifier)
+            )
+        }
     }
 }
 

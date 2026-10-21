@@ -5,6 +5,7 @@ import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import me.weishu.kernelsu.fake.FakeFeatures
 import me.weishu.kernelsu.fake.FakeInstallState
 import me.weishu.kernelsu.fake.FakeProfiles
 import me.weishu.kernelsu.fake.FakeState
@@ -112,14 +113,16 @@ object Natives {
      *  0: disabled
      *  1: enabled
      *  negative : error
+     *
+     * FakeKernelSU: backed by its own `kernel_umount` feature entry, so it no
+     * longer shares storage with [isDefaultUmountModules].
      */
     fun isKernelUmountEnabled(): Boolean {
-        return isDefaultUmountModules()
+        return FakeFeatures.isEnabled(FEATURE_KERNEL_UMOUNT)
     }
 
     fun setKernelUmountEnabled(enabled: Boolean): Boolean {
-        setDefaultUmountModules(enabled)
-        return true
+        return FakeFeatures.setEnabled(FEATURE_KERNEL_UMOUNT, enabled)
     }
 
     /**
@@ -129,11 +132,12 @@ object Natives {
      *  negative : error
      */
     fun isSelinuxHideEnabled(): Boolean {
-        return true
+        return FakeFeatures.isEnabled(FEATURE_SELINUX_HIDE)
     }
 
+    /** Returns 0 on success, like the upstream ioctl. */
     fun setSelinuxHideEnabled(enabled: Boolean): Int {
-        return if (enabled) 1 else 0
+        return if (FakeFeatures.setEnabled(FEATURE_SELINUX_HIDE, enabled)) 0 else -1
     }
 
     /**
@@ -150,6 +154,9 @@ object Natives {
 
     private const val NON_ROOT_DEFAULT_PROFILE_KEY = "$"
     private const val NOBODY_UID = 9999
+
+    private const val FEATURE_KERNEL_UMOUNT = "kernel_umount"
+    private const val FEATURE_SELINUX_HIDE = "selinux_hide"
 
     fun setDefaultUmountModules(umountModules: Boolean): Boolean {
         Profile(

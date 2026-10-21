@@ -141,6 +141,18 @@ object FakeState {
         get() = prefs.getInt(KEY_UNLOCK_TAPS, 7).coerceIn(3, 20)
         set(value) = prefs.edit().putInt(KEY_UNLOCK_TAPS, value.coerceIn(3, 20)).apply()
 
+    // --------------------------------------------------------- feature status
+
+    /**
+     * Emulated result of `ksud feature check`: `supported` (the default, every
+     * toggle is usable), `managed` (taken over by a module → greyed out) or
+     * `unsupported`. Only the lab changes this, to demo the greyed-out state.
+     */
+    var featureStatusOverride: String
+        get() = prefs.getString(KEY_FEATURE_STATUS, FEATURE_STATUS_SUPPORTED)
+            ?: FEATURE_STATUS_SUPPORTED
+        set(value) = prefs.edit().putString(KEY_FEATURE_STATUS, value).apply()
+
     // -------------------------------------------------------- su simulation
 
     var suRequestMode: FakeSuRequestMode
@@ -193,6 +205,11 @@ object FakeState {
     private const val KEY_STEALTH = "stealth_mode"
     private const val KEY_UNLOCK_TAPS = "unlock_taps"
     private const val KEY_SU_MODE = "su_request_mode"
+    private const val KEY_FEATURE_STATUS = "feature_status"
+
+    const val FEATURE_STATUS_SUPPORTED = "supported"
+    const val FEATURE_STATUS_MANAGED = "managed"
+    const val FEATURE_STATUS_UNSUPPORTED = "unsupported"
 }
 
 enum class LauncherAlias(val componentSuffix: String, val labelRes: Int) {

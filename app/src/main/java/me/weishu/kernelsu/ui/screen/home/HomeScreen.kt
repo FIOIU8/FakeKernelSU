@@ -67,6 +67,12 @@ fun HomePager(
             // FakeKernelSU: late-load/jailbreak needs a real kernel module.
             Toast.makeText(context, R.string.fake_unsupported_action, Toast.LENGTH_LONG).show()
         },
+        // Stealth-friendly entry to the control panel: the bottom bar is hidden
+        // until the fake install happens, so without this the lab would be
+        // unreachable on a fresh install.
+        onUnlockPanel = {
+            if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
+        },
     )
 
     when (LocalUiMode.current) {
