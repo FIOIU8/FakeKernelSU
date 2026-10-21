@@ -1,113 +1,269 @@
 package me.weishu.kernelsu.ui.screen.install
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
+import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
+import me.weishu.kernelsu.ui.component.material.SegmentedCheckboxItem
+import me.weishu.kernelsu.ui.component.material.SegmentedColumn
+import me.weishu.kernelsu.ui.component.material.SegmentedDropdownItem
+import me.weishu.kernelsu.ui.component.material.SegmentedListItem
+import me.weishu.kernelsu.ui.component.material.SegmentedRadioItem
+import me.weishu.kernelsu.ui.component.material.SnackBarHost
+import me.weishu.kernelsu.ui.component.material.TopBarBackButton
+import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
+import me.weishu.kernelsu.ui.util.LkmSelection
 
 /**
- * Material 3 flavour of the fake install screen.
+ * Material 3 flavour of the install screen, restored to the upstream layout
+ * (four install methods + partition picker + advanced options).
+ *
+ * @author weishu
+ * @date 2024/3/12.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InstallScreenMaterial(
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    onNext: () -> Unit,
+internal fun InstallScreenMaterial(
+    uiState: InstallUiState,
+    actions: InstallScreenActions,
+    snackBarHost: SnackbarHostState,
 ) {
-    val navigator = LocalNavigator.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
-    Scaffold(
+    ExpressiveScaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.fake_install_title)) },
-                navigationIcon = {
-                    IconButton(onClick = { navigator.pop() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
-                },
+            TopBar(
+                onBack = actions.onBack,
+                scrollBehavior = scrollBehavior,
             )
         },
+        snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.safeDrawingPadding()) },
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
+                .fillMaxHeight()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(13.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onSelect(0) },
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(selected = selected == 0, onClick = { onSelect(0) })
-                    Icon(
-                        Icons.Rounded.Download,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .size(24.dp),
-                    )
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
-                        Text(
-                            text = stringResource(R.string.direct_install),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
+            SelectInstallMethod(
+                state = uiState,
+                onSelected = actions.onSelectMethod,
+                onDownloadFile = actions.onDownloadFile,
+                onSelectBootImage = actions.onSelectBootImage,
+            )
+
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                content = buildList {
+                    val isDownload = uiState.installMethod is InstallMethod.DownloadFile
+                    val partitionItems = if (isDownload) {
+                        uiState.remoteDisplayPartitions
+                    } else {
+                        uiState.displayPartitions
+                    }
+                    val partitionIndex = if (isDownload) {
+                        uiState.remotePartitionSelectionIndex
+                    } else {
+                        uiState.partitionSelectionIndex
+                    }
+                    if (partitionItems.isNotEmpty()) add {
+                        SegmentedDropdownItem(
+                            enabled = uiState.canSelectPartition,
+                            items = partitionItems,
+                            selectedIndex = partitionIndex,
+                            title = if (isDownload) {
+                                stringResource(R.string.install_select_partition)
+                            } else {
+                                "${stringResource(R.string.install_select_partition)} (${uiState.slotSuffix})"
+                            },
+                            onItemSelected = actions.onSelectPartition,
+                            icon = Icons.Filled.Edit
                         )
-                        Text(
-                            text = stringResource(R.string.fake_install_direct_summary),
-                            style = MaterialTheme.typography.bodySmall,
+                    }
+                    if (uiState.canForceBackup) add {
+                        SegmentedCheckboxItem(
+                            title = stringResource(R.string.install_force_backup),
+                            summary = stringResource(R.string.install_force_backup_summary),
+                            onCheckedChange = actions.onSelectForceBackup,
+                            checked = uiState.forceBackup,
+                        )
+                    }
+                    add {
+                        SegmentedListItem(
+                            leadingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.DriveFileMove,
+                                    null
+                                )
+                            },
+                            headlineContent = { Text(stringResource(R.string.install_upload_lkm_file)) },
+                            supportingContent = {
+                                (uiState.lkmSelection as? LkmSelection.LkmUri)?.let {
+                                    Text(
+                                        stringResource(
+                                            R.string.selected_lkm,
+                                            it.uri.lastPathSegment ?: "(file)"
+                                        )
+                                    )
+                                }
+                            },
+                            trailingContent = {
+                                if (uiState.lkmSelection is LkmSelection.LkmUri) {
+                                    IconButton(onClick = actions.onClearLkm) {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = stringResource(android.R.string.cancel)
+                                        )
+                                    }
+                                } else {
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
+                                }
+                            },
+                            onClick = actions.onUploadLkm
                         )
                     }
                 }
-            }
+            )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Button(
-                onClick = onNext,
-                modifier = Modifier.fillMaxWidth(),
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp),
             ) {
-                Text(stringResource(R.string.install_next))
+                item {
+                    val rotationState by animateFloatAsState(
+                        targetValue = if (uiState.advancedOptionsShown) 180f else 0f,
+                        label = "RotationAnimation"
+                    )
+                    SegmentedListItem(
+                        headlineContent = { Text(stringResource(R.string.advanced_options)) },
+                        trailingContent = {
+                            Icon(
+                                imageVector = Icons.Filled.ExpandMore,
+                                contentDescription = stringResource(R.string.expand),
+                                modifier = Modifier.graphicsLayer { rotationZ = rotationState }
+                            )
+                        },
+                        onClick = actions.onAdvancedOptionsClicked
+                    )
+                }
+                item(visible = uiState.advancedOptionsShown) {
+                    SegmentedCheckboxItem(
+                        title = stringResource(id = R.string.allow_shell),
+                        summary = stringResource(id = R.string.allow_shell_summary),
+                        checked = uiState.allowShell,
+                        onCheckedChange = actions.onSelectAllowShell,
+                    )
+                }
+                item(visible = uiState.advancedOptionsShown) {
+                    SegmentedCheckboxItem(
+                        title = stringResource(id = R.string.enable_adb),
+                        summary = stringResource(id = R.string.enable_adb_summary),
+                        checked = uiState.enableAdb,
+                        onCheckedChange = actions.onSelectEnableAdb,
+                    )
+                }
             }
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                enabled = uiState.installMethod != null,
+                onClick = actions.onNext
+            ) { Text(stringResource(R.string.install_next)) }
         }
     }
+}
+
+@Composable
+private fun SelectInstallMethod(
+    state: InstallUiState,
+    onSelected: (InstallMethod) -> Unit,
+    onDownloadFile: () -> Unit,
+    onSelectBootImage: () -> Unit,
+) {
+    val confirmDialog = rememberConfirmDialog(
+        onConfirm = {
+            onSelected(InstallMethod.DirectInstallToInactiveSlot)
+        },
+        onDismiss = null
+    )
+    val dialogTitle = stringResource(android.R.string.dialog_alert_title)
+    val dialogContent = stringResource(R.string.install_inactive_slot_warning)
+
+    val onClick = { option: InstallMethod ->
+        when (option) {
+            is InstallMethod.SelectFile -> onSelectBootImage()
+            is InstallMethod.DownloadFile -> onDownloadFile()
+            is InstallMethod.DirectInstall -> onSelected(option)
+            is InstallMethod.DirectInstallToInactiveSlot -> confirmDialog.showConfirm(dialogTitle, dialogContent)
+        }
+    }
+
+    key(state.installMethodOptions.size) {
+        SegmentedColumn(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            content = state.installMethodOptions.map { option ->
+                {
+                    SegmentedRadioItem(
+                        title = stringResource(option.label),
+                        summary = option.summary,
+                        selected = option.javaClass == state.installMethod?.javaClass,
+                        onClick = { onClick(option) }
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun TopBar(
+    onBack: () -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null
+) {
+    LargeFlexibleTopAppBar(
+        title = { Text(stringResource(R.string.install)) },
+        navigationIcon = {
+            TopBarBackButton(onClick = onBack)
+        },
+        colors = expressiveTopAppBarColors(),
+        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+        scrollBehavior = scrollBehavior
+    )
 }
