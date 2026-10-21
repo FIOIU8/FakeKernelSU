@@ -48,9 +48,10 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       # FakeKernelSU advertises "no native libraries at all" - keep CI honest.
+      # Note: the APK file name is derived from archivesName, so glob it.
       - name: Verify no native libraries in APK
         run: |
-          apk="app/build/outputs/apk/debug/app-debug.apk"
+          apk=$(ls app/build/outputs/apk/debug/*.apk | head -1)
           if unzip -l "$apk" | grep -q '\.so'; then
             echo "::error::APK contains native libraries, breaking the 'pure demo' promise"
             unzip -l "$apk" | grep '\.so'
