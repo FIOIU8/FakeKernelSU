@@ -466,4 +466,16 @@
     <string name="home_edit_hint">留空表示使用真机真实值</string>
     <string name="fake_edit_save">保存</string>
     <string name="fake_edit_reset">恢复真实值</string>
+
+    <!-- FakeKernelSU: 实验室分区 -->
+    <string name="fake_panel_runtime">运行状态</string>
+    <string name="fake_panel_version_mode">版本与模式</string>
+    <string name="fake_panel_system_info">系统信息</string>
+    <string name="fake_panel_naming">名称与伪装</string>
+    <string name="fake_panel_mode">模式</string>
+    <string name="fake_panel_feature_status">功能状态模拟</string>
+    <string name="fake_panel_feature_status_summary">模拟设置项被模块接管</string>
+    <string name="fake_feature_status_supported">可用</string>
+    <string name="fake_feature_status_managed">由模块管理</string>
+    <string name="fake_feature_status_unsupported">不支持</string>
 </resources>

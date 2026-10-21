@@ -1,7 +1,13 @@
 package me.weishu.kernelsu.ui.screen.fakepanel
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -14,7 +20,16 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -29,8 +44,9 @@ import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
-import me.weishu.kernelsu.ui.component.miuix.EditText
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
+import me.weishu.kernelsu.ui.component.miuix.EditText
+import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.util.BlurredBar
@@ -57,7 +73,10 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 /**
- * Miuix flavour of the FakeKernelSU control panel.
+ * Miuix flavour of the FakeKernelSU lab.
+ *
+ * Same sections and order as the Material flavour (#3); only the containers
+ * differ.
  */
 @Composable
 fun FakeControlPanelMiuix(state: FakePanelState) {
@@ -115,8 +134,13 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                 overscrollEffect = null,
             ) {
                 item {
-                    // -------------------------------------------- install state
-                    PanelCard(title = stringResource(R.string.fake_panel_state)) {
+                    StatusOverview(state)
+
+                    // ------------------------------------------------- runtime
+                    SectionCard(
+                        title = stringResource(R.string.fake_panel_runtime),
+                        section = FakePanelSection.RUNTIME,
+                    ) {
                         FakeInstallState.entries.forEach { entry ->
                             RadioButtonPreference(
                                 title = stringResource(entry.labelRes()),
@@ -125,22 +149,39 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                                 onClick = { state.selectInstallState(entry) },
                             )
                         }
-                    }
-
-                    // ------------------------------------------------ root state
-                    PanelCard(title = stringResource(R.string.fake_panel_root)) {
                         SwitchPreference(
                             title = stringResource(R.string.fake_panel_root),
                             summary = stringResource(R.string.fake_panel_root_summary),
                             checked = state.rootAvailable,
                             onCheckedChange = { state.updateRootAvailable(it) },
                         )
+                        SectionLabel(stringResource(R.string.fake_panel_su_mode))
+                        FakeSuRequestMode.entries.forEach { entry ->
+                            RadioButtonPreference(
+                                title = stringResource(entry.labelRes()),
+                                selected = state.suRequestMode == entry,
+                                onClick = { state.selectSuRequestMode(entry) },
+                            )
+                        }
+                        OverlayDropdownPreference(
+                            title = stringResource(R.string.fake_panel_feature_status),
+                            summary = stringResource(featureStatusLabelRes(state.featureStatus)),
+                            items = FEATURE_STATUS_VALUES.map { stringResource(featureStatusLabelRes(it)) },
+                            selectedIndex = FEATURE_STATUS_VALUES.indexOf(state.featureStatus)
+                                .coerceAtLeast(0),
+                            onSelectedIndexChange = {
+                                state.selectFeatureStatus(FEATURE_STATUS_VALUES[it])
+                            },
+                        )
                     }
 
-                    // --------------------------------------------------- version
-                    PanelCard(title = stringResource(R.string.fake_panel_version)) {
+                    // ------------------------------------------ version and mode
+                    SectionCard(
+                        title = stringResource(R.string.fake_panel_version_mode),
+                        section = FakePanelSection.VERSION,
+                    ) {
                         EditText(
-                            title = stringResource(R.string.fake_panel_version_hint),
+                            title = stringResource(R.string.fake_panel_ksu_version),
                             value = state.ksuVersion,
                             onValueChange = { state.updateKsuVersion(it) },
                             textHint = "13000",
@@ -150,29 +191,20 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             value = state.managerVersionCode,
                             onValueChange = { state.updateManagerVersionCode(it) },
                         )
+                        if (state.managerVersionCode.isNotBlank()) {
+                            HintText(
+                                stringResource(
+                                    R.string.fake_panel_compare_value,
+                                    state.managerVersionCode.toLongOrNull() ?: 0L,
+                                )
+                            )
+                        }
                         EditText(
                             title = stringResource(R.string.fake_panel_manager_version_name),
                             value = state.managerVersionName,
                             onValueChange = { state.updateManagerVersionName(it) },
                         )
-                        if (state.managerVersionCode.isNotBlank()) {
-                            Text(
-                                text = stringResource(
-                                    R.string.fake_panel_compare_value,
-                                    state.managerVersionCode.toLongOrNull() ?: 0L,
-                                ),
-                                fontSize = 13.sp,
-                                color = colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
-                            )
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.fake_panel_lkm),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = 16.dp, top = 8.dp),
-                        )
+                        SectionLabel(stringResource(R.string.fake_panel_mode))
                         FakeWorkingMode.entries.forEach { mode ->
                             RadioButtonPreference(
                                 title = stringResource(mode.labelRes()),
@@ -182,14 +214,11 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                         }
                     }
 
-                    // ------------------------------------------ home overrides
-                    PanelCard(title = stringResource(R.string.fake_panel_home_overrides)) {
-                        Text(
-                            text = stringResource(R.string.fake_panel_override_hint),
-                            fontSize = 13.sp,
-                            color = colorScheme.onSurfaceVariantSummary,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
-                        )
+                    // -------------------------------------------- system info
+                    SectionCard(
+                        title = stringResource(R.string.fake_panel_system_info),
+                        section = FakePanelSection.SYSTEM_INFO,
+                    ) {
                         EditText(
                             title = stringResource(R.string.home_device_model),
                             value = state.deviceModel,
@@ -225,14 +254,30 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                         )
                     }
 
-                    // ----------------------------------------------- app naming
-                    PanelCard(title = stringResource(R.string.fake_panel_app_name)) {
-                        Text(
-                            text = stringResource(R.string.fake_panel_launcher_label),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = 16.dp, top = 8.dp),
+                    // ------------------------------------------------ naming
+                    SectionCard(
+                        title = stringResource(R.string.fake_panel_naming),
+                        section = FakePanelSection.NAMING,
+                    ) {
+                        EditText(
+                            title = stringResource(R.string.fake_panel_brand),
+                            value = state.brandName,
+                            onValueChange = { state.updateBrandName(it) },
                         )
+                        HintText(
+                            stringResource(
+                                R.string.fake_panel_brand_in_use,
+                                state.brandName.ifBlank {
+                                    state.inAppName.ifBlank { stringResource(R.string.app_name) }
+                                },
+                            )
+                        )
+                        EditText(
+                            title = stringResource(R.string.fake_panel_in_app_name),
+                            value = state.inAppName,
+                            onValueChange = { state.updateInAppName(it) },
+                        )
+                        SectionLabel(stringResource(R.string.fake_panel_launcher_label))
                         LauncherAlias.entries.forEach { entry ->
                             RadioButtonPreference(
                                 title = stringResource(entry.labelRes),
@@ -240,43 +285,6 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                                 onClick = { state.selectLauncherAlias(entry) },
                             )
                         }
-                        Spacer(Modifier.height(8.dp))
-                        EditText(
-                            title = stringResource(R.string.fake_panel_brand),
-                            value = state.brandName,
-                            onValueChange = { state.updateBrandName(it) },
-                        )
-                        Text(
-                            text = stringResource(
-                                R.string.fake_panel_brand_in_use,
-                                state.brandName.ifBlank {
-                                    state.inAppName.ifBlank { stringResource(R.string.app_name) }
-                                },
-                            ),
-                            fontSize = 13.sp,
-                            color = colorScheme.onSurfaceVariantSummary,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
-                        )
-                        EditText(
-                            title = stringResource(R.string.fake_panel_in_app_name),
-                            value = state.inAppName,
-                            onValueChange = { state.updateInAppName(it) },
-                        )
-                    }
-
-                    // ----------------------------------------------- su simulate
-                    PanelCard(title = stringResource(R.string.fake_panel_su_mode)) {
-                        FakeSuRequestMode.entries.forEach { entry ->
-                            RadioButtonPreference(
-                                title = stringResource(entry.labelRes()),
-                                selected = state.suRequestMode == entry,
-                                onClick = { state.selectSuRequestMode(entry) },
-                            )
-                        }
-                    }
-
-                    // -------------------------------------------------- stealth
-                    PanelCard(title = stringResource(R.string.fake_panel_stealth)) {
                         SwitchPreference(
                             title = stringResource(R.string.fake_panel_stealth),
                             summary = stringResource(R.string.fake_panel_stealth_summary, state.unlockTaps),
@@ -292,8 +300,12 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                         )
                     }
 
-                    // -------------------------------------------- danger zone
-                    PanelCard(title = stringResource(R.string.fake_panel_danger)) {
+                    // --------------------------------------------- danger zone
+                    SectionCard(
+                        title = stringResource(R.string.fake_panel_danger),
+                        section = FakePanelSection.DANGER,
+                        danger = true,
+                    ) {
                         TextButton(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -328,22 +340,106 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
     }
 }
 
+/** "installed / mode / version" at a glance, no scrolling needed. */
 @Composable
-private fun PanelCard(title: String, content: @Composable () -> Unit) {
+private fun StatusOverview(state: FakePanelState) {
+    val installed = when (state.stateOverride) {
+        FakeInstallState.AUTO -> FakeState.installed
+        FakeInstallState.INSTALLED -> true
+        else -> false
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, start = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatusTag(
+            label = stringResource(
+                if (installed) R.string.fake_panel_state_installed
+                else R.string.fake_panel_state_not_installed
+            ),
+            backgroundColor = if (installed) colorScheme.secondaryContainer else colorScheme.errorContainer,
+            contentColor = if (installed) colorScheme.onSecondaryContainer else colorScheme.onErrorContainer,
+        )
+        StatusTag(
+            label = stringResource(state.workingMode.labelRes()),
+            backgroundColor = colorScheme.tertiaryContainer,
+            contentColor = colorScheme.onTertiaryContainer,
+        )
+        StatusTag(
+            label = if (installed) "v${state.ksuVersion}" else "—",
+            backgroundColor = colorScheme.surfaceContainerHigh,
+            contentColor = colorScheme.onSurfaceVariantSummary,
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(
+    title: String,
+    section: FakePanelSection,
+    danger: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    var expanded by rememberSaveable(section.name) { mutableStateOf(section.defaultExpanded) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp),
     ) {
         Column {
-            Text(
-                text = title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
-            )
-            Spacer(Modifier.height(4.dp))
-            content()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (danger) colorScheme.error else colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariantSummary,
+                )
+            }
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically(),
+            ) {
+                Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                    content()
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 2.dp),
+    )
+}
+
+@Composable
+private fun HintText(text: String) {
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        color = colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+    )
 }

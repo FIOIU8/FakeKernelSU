@@ -472,4 +472,16 @@
     <string name="home_edit_hint">Leave empty to use the real device value</string>
     <string name="fake_edit_save">Save</string>
     <string name="fake_edit_reset">Use real value</string>
+
+    <!-- FakeKernelSU: lab sections -->
+    <string name="fake_panel_runtime">Runtime</string>
+    <string name="fake_panel_version_mode">Version &amp; mode</string>
+    <string name="fake_panel_system_info">System info</string>
+    <string name="fake_panel_naming">Name &amp; disguise</string>
+    <string name="fake_panel_mode">Mode</string>
+    <string name="fake_panel_feature_status">Feature status</string>
+    <string name="fake_panel_feature_status_summary">Simulate the greyed-out state</string>
+    <string name="fake_feature_status_supported">Supported</string>
+    <string name="fake_feature_status_managed">Managed</string>
+    <string name="fake_feature_status_unsupported">Unsupported</string>
 </resources>

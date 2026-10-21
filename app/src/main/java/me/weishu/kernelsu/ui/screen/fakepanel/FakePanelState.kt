@@ -30,6 +30,16 @@ enum class FakeWorkingMode {
     ;
 }
 
+/** Collapsible sections of the lab, in display order (#3). */
+enum class FakePanelSection(val defaultExpanded: Boolean) {
+    RUNTIME(true),
+    VERSION(true),
+    SYSTEM_INFO(false),
+    NAMING(false),
+    DANGER(false),
+    ;
+}
+
 /**
  * Every value the control panel can tweak, plus the mutations that persist
  * them into [FakeState].
@@ -57,6 +67,7 @@ class FakePanelState {
     var brandName by mutableStateOf(FakeState.brandName)
     var suRequestMode by mutableStateOf(FakeState.suRequestMode)
     var stealthMode by mutableStateOf(FakeState.stealthMode)
+    var featureStatus by mutableStateOf(FakeState.featureStatusOverride)
     var unlockTaps by mutableIntStateOf(FakeState.unlockTapCount)
     var sliderValue by mutableFloatStateOf(FakeState.unlockTapCount.toFloat())
     var showWipeDialog by mutableStateOf(false)
@@ -170,6 +181,11 @@ class FakePanelState {
         FakeState.stealthMode = value
     }
 
+    fun selectFeatureStatus(value: String) {
+        featureStatus = value
+        FakeState.featureStatusOverride = value
+    }
+
     fun setUnlockTaps(value: Float) {
         sliderValue = value
         unlockTaps = value.toInt()
@@ -194,6 +210,7 @@ class FakePanelState {
         inAppName = ""
         brandName = ""
         stealthMode = false
+        featureStatus = FakeState.FEATURE_STATUS_SUPPORTED
         unlockTaps = 7
         sliderValue = 7f
         launcherAlias = LauncherAlias.FAKE
