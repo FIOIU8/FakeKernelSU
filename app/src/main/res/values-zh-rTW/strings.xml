@@ -281,4 +281,7 @@
     <string name="fake_panel_stealth_summary">從設定中移除實驗室入口</string>
     <string name="fake_panel_hide_entry_message">隱藏後設定中的實驗室入口將消失。實驗室不會被刪除，長按首頁標題即可重新進入。</string>
     <string name="fake_panel_long_press_hint">重新進入:長按首頁標題。</string>
+    <string name="fake_jailbreak_confirm">進入越獄模式?\n\n將在執行期取得 root(late-load),重新開機後失效,需要重新越獄。</string>
+    <string name="fake_jailbreak_enabled">越獄模式已生效</string>
+    <string name="fake_jailbreak_rebooted">越獄模式已退出</string>
 </resources>
