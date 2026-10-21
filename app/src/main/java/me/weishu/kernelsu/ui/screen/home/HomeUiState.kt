@@ -67,4 +67,6 @@ data class HomeActions(
     val onInstallClick: () -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onJailbreakClick: () -> Unit = {},
+    /** Hidden entry: tapping the home title N times opens the lab. */
+    val onUnlockPanel: () -> Unit = {},
 )
