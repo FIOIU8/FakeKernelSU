@@ -1,0 +1,164 @@
+name: Release
+
+# Manual only: cutting a release is a deliberate act. The workflow builds a
+# release APK, pushes a semver tag (if missing) and submits a DRAFT GitHub
+# Release. Nothing becomes public until a human publishes the draft.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version without the leading "v", e.g. 1.1.0'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark the release as a pre-release'
+        required: false
+        default: false
+        type: boolean
+      notes:
+        description: 'Extra release notes (Markdown). A changelog from git log is generated automatically.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and draft release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: "Guard - default branch only"
+        if: ${{ github.ref_name != github.event.repository.default_branch }}
+        run: |
+          echo "::error::Releases can only be cut from the default branch (${{ github.event.repository.default_branch }}), current ref is ${{ github.ref_name }}."
+          exit 1
+
+      # Create (or reuse) the semver tag BEFORE building, so that
+      # `git describe` inside Gradle yields a clean version name.
+      - name: Create and push tag
+        id: tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          TAG="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            echo "Tag $TAG already exists, reusing it."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "FakeKernelSU $TAG"
+            git push origin "refs/tags/$TAG"
+            echo "Created and pushed tag $TAG."
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      # Optional release signing. Configure the repository secrets below to
+      # sign with a real certificate; without them the APK is signed with the
+      # debug certificate (app/build.gradle.kts falls back automatically).
+      #   KEYSTORE_BASE64  - base64 of the .jks/.keystore file
+      #   KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+      - name: Decode keystore (optional)
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APK
+        env:
+          KEYSTORE_FILE: ${{ steps.keystore.outputs.file }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ARGS=""
+          if [ -n "${KEYSTORE_FILE:-}" ]; then
+            ARGS="-PKEYSTORE_FILE=$KEYSTORE_FILE -PKEYSTORE_PASSWORD=$KEYSTORE_PASSWORD -PKEY_ALIAS=$KEY_ALIAS -PKEY_PASSWORD=$KEY_PASSWORD"
+            echo "Building with release keystore."
+          else
+            echo "No keystore secret configured, release APK will be debug-signed."
+          fi
+          ./gradlew assembleRelease --no-daemon $ARGS
+
+      - name: Collect APK and checksum
+        id: apk
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          OUT="FakeKernelSU-${TAG}-release.apk"
+          cp "$APK" "$RUNNER_TEMP/$OUT"
+          (cd "$RUNNER_TEMP" && sha256sum "$OUT" > "$OUT.sha256")
+          echo "dir=$RUNNER_TEMP" >> "$GITHUB_OUTPUT"
+          echo "file=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
+          if [ -n "$PREV_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" "$PREV_TAG..$TAG" > changes.txt || true
+          else
+            git log --pretty=format:"- %s (%h)" "$TAG" > changes.txt || true
+          fi
+          {
+            echo "## FakeKernelSU $TAG"
+            echo
+            echo "- APK: \`FakeKernelSU-${TAG}-release.apk\`"
+            echo "- Version name: $(git describe --tags)"
+            echo
+            if [ -n "$NOTES" ]; then
+              echo "$NOTES"
+              echo
+            fi
+            echo "### Changes since previous tag"
+            echo
+            cat changes.txt
+          } > body.md
+          echo 'body<<EOF' >> "$GITHUB_OUTPUT"
+          cat body.md >> "$GITHUB_OUTPUT"
+          echo 'EOF' >> "$GITHUB_OUTPUT"
+
+      # Draft only - a human reviews and publishes it from the Releases page.
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: FakeKernelSU ${{ steps.tag.outputs.tag }}
+          draft: true
+          prerelease: ${{ inputs.prerelease == true }}
+          body: ${{ steps.changelog.outputs.body }}
+          files: |
+            ${{ steps.apk.outputs.dir }}/${{ steps.apk.outputs.file }}
+            ${{ steps.apk.outputs.dir }}/${{ steps.apk.outputs.file }}.sha256
