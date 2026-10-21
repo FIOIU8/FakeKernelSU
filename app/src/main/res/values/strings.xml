@@ -466,4 +466,10 @@
     <string name="fake_panel_brand">Brand name</string>
     <string name="fake_panel_brand_summary">Used in in-app text; empty = app name</string>
     <string name="fake_panel_brand_in_use">Brand shown as %1$s</string>
+
+    <!-- FakeKernelSU: long-press home info editing -->
+    <string name="home_edit_summary">Long press a row to change what the home page shows</string>
+    <string name="home_edit_hint">Leave empty to use the real device value</string>
+    <string name="fake_edit_save">Save</string>
+    <string name="fake_edit_reset">Use real value</string>
 </resources>

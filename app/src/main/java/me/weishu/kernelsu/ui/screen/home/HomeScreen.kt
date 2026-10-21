@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -46,6 +47,7 @@ fun HomePager(
     val scope = rememberCoroutineScope()
     val latestIsCurrentPage by rememberUpdatedState(isCurrentPage)
     val initialResumeHandled = rememberSaveable { mutableStateOf(false) }
+    var editingField by remember { mutableStateOf<SystemInfoField?>(null) }
 
     var hasActivated by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isCurrentPage) {
@@ -87,7 +89,25 @@ fun HomePager(
         onUnlockPanel = {
             if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
         },
+        onEditField = { editingField = it },
     )
+
+    val editField = editingField
+    if (editField != null) {
+        EditSystemInfoDialog(
+            field = editField,
+            currentValue = when (editField) {
+                SystemInfoField.MANAGER_VERSION -> uiState.currentManagerVersionCode.toString()
+                SystemInfoField.KERNEL -> uiState.systemInfo.kernelVersion
+                SystemInfoField.DEVICE_MODEL -> uiState.systemInfo.deviceModel
+                SystemInfoField.FINGERPRINT -> uiState.systemInfo.fingerprint
+                SystemInfoField.SELINUX -> uiState.systemInfo.selinuxStatus
+                SystemInfoField.SECCOMP -> uiState.systemInfo.seccompStatus.toString()
+            },
+            onDismiss = { editingField = null },
+            onSaved = { viewModel.refresh() },
+        )
+    }
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> HomePagerMiuix(

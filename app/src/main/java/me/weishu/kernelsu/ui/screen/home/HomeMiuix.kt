@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
@@ -172,6 +175,7 @@ fun HomePagerMiuix(
                         )
                         InfoCard(
                             systemInfo = state.systemInfo,
+                            onEditField = actions.onEditField,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         SupportLinks(
@@ -492,18 +496,29 @@ private fun SupportLinks(
 @Composable
 private fun InfoCard(
     systemInfo: SystemInfo,
+    onEditField: (SystemInfoField) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     @Composable
     fun InfoText(
         icon: ImageVector,
         title: String,
         content: String,
+        field: SystemInfoField,
         bottomPadding: Dp = 24.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onEditField(field)
+                    },
+                )
                 .padding(bottom = bottomPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -556,21 +571,25 @@ private fun InfoCard(
                     icon = Icons.Filled.Tag,
                     title = stringResource(R.string.home_manager_version),
                     content = systemInfo.managerVersion,
+                    field = SystemInfoField.MANAGER_VERSION,
                 )
                 InfoText(
                     icon = Icons.Filled.DeveloperBoard,
                     title = stringResource(R.string.home_kernel),
                     content = systemInfo.kernelVersion,
+                    field = SystemInfoField.KERNEL,
                 )
                 InfoText(
                     icon = Icons.Filled.Smartphone,
                     title = stringResource(R.string.home_device_model),
                     content = systemInfo.deviceModel,
+                    field = SystemInfoField.DEVICE_MODEL,
                 )
                 InfoText(
                     icon = Icons.Filled.Fingerprint,
                     title = stringResource(R.string.home_fingerprint),
                     content = systemInfo.fingerprint,
+                    field = SystemInfoField.FINGERPRINT,
                     bottomPadding = 0.dp,
                 )
             }
@@ -581,11 +600,13 @@ private fun InfoCard(
                     icon = Icons.Filled.Security,
                     title = stringResource(R.string.home_selinux_status),
                     content = selinuxDisplay,
+                    field = SystemInfoField.SELINUX,
                 )
                 InfoText(
                     icon = Icons.Filled.FilterList,
                     title = stringResource(R.string.home_seccomp_status),
                     content = seccompDisplay,
+                    field = SystemInfoField.SECCOMP,
                     bottomPadding = 0.dp,
                 )
             }
@@ -666,6 +687,7 @@ private fun HomeScreenPreviewContent(
             )
             InfoCard(
                 systemInfo = previewSystemInfo.copy(selinuxStatus = selinuxStatus),
+                onEditField = {},
                 modifier = Modifier.fillMaxWidth(),
             )
             SupportLinks(

@@ -20,7 +20,9 @@ class SuperUserRepositoryImpl : SuperUserRepository {
     override suspend fun getAppList(): Result<Pair<List<AppInfo>, List<Int>>> = withContext(Dispatchers.IO) {
         runCatching {
             val pm = ksuApp.packageManager
-            val installed = pm.getInstalledPackages(0)
+            // Same source as the su-request picker, so the picker can only ever
+            // offer a superset of what this list shows (#8).
+            val installed = AppCatalog.packages()
 
             val newApps = installed.asSequence()
                 .filter {

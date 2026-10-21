@@ -1,7 +1,6 @@
 package me.weishu.kernelsu.ui.screen.superuser
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -37,12 +36,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.AppInfo
+import me.weishu.kernelsu.data.repository.AppCatalog
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSu
 import me.weishu.kernelsu.fake.FakeSuRequestMode
@@ -85,23 +83,7 @@ class FakeSuRequestController internal constructor(
 
     internal suspend fun loadApps() {
         if (appsLoaded) return
-        allApps = withContext(Dispatchers.IO) {
-            val pm = context.packageManager
-            pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)
-                .asSequence()
-                .filter { it.applicationInfo != null }
-                .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-                .map {
-                    AppInfo(
-                        label = it.applicationInfo!!.loadLabel(pm).toString(),
-                        packageInfo = it,
-                        profile = null,
-                    )
-                }
-                .distinctBy { it.packageName }
-                .sortedBy { it.label.lowercase() }
-                .toList()
-        }
+        allApps = AppCatalog.launchable()
         appsLoaded = true
     }
 

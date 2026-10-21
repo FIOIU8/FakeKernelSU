@@ -460,4 +460,10 @@
     <string name="fake_panel_brand">品牌名</string>
     <string name="fake_panel_brand_summary">用于应用内文案;空 = 应用名</string>
     <string name="fake_panel_brand_in_use">当前显示为 %1$s</string>
+
+    <!-- FakeKernelSU: 首页信息长按编辑 -->
+    <string name="home_edit_summary">长按任意一行可修改首页显示内容</string>
+    <string name="home_edit_hint">留空表示使用真机真实值</string>
+    <string name="fake_edit_save">保存</string>
+    <string name="fake_edit_reset">恢复真实值</string>
 </resources>

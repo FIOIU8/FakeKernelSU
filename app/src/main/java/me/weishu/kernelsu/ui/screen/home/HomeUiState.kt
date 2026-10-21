@@ -62,6 +62,16 @@ data class HomeUiState(
         get() = latestVersionInfo.versionCode > currentManagerVersionCode
 }
 
+/** Long-press editable rows of the home info card (#6). */
+enum class SystemInfoField {
+    MANAGER_VERSION,
+    KERNEL,
+    DEVICE_MODEL,
+    FINGERPRINT,
+    SELINUX,
+    SECCOMP,
+}
+
 @Immutable
 data class HomeActions(
     val onInstallClick: () -> Unit,
@@ -69,4 +79,6 @@ data class HomeActions(
     val onJailbreakClick: () -> Unit = {},
     /** Hidden entry: tapping the home title N times opens the lab. */
     val onUnlockPanel: () -> Unit = {},
+    /** Long press on an info row opens the editor for that field. */
+    val onEditField: (SystemInfoField) -> Unit = {},
 )
