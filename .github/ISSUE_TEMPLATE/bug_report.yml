@@ -1,0 +1,96 @@
+name: Bug 报告
+description: 报告一个非预期行为
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先搜索是否已有相同 Issue。
+        提示：很多"异常"其实是实验室配置导致的——请先在实验室 → 危险区 → **重置演示状态**，再复现一次。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么？越具体越好。
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开 App
+        2. 进入 …
+        3. 出现 …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: 设备型号
+      placeholder: 如 Pixel 8 / 小米 14
+    validations:
+      required: true
+
+  - type: input
+    id: android
+    attributes:
+      label: Android 版本
+      placeholder: 如 Android 15 (API 35)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App 版本
+      description: 设置 → 关于 里的版本号，或 Releases 页的版本号。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ui
+    attributes:
+      label: 使用的 UI 皮肤
+      options:
+        - Material
+        - Miuix
+        - 两者都出现
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lab
+    attributes:
+      label: 是否修改过实验室状态
+      options:
+        - "否（已重置为默认）"
+        - 是（请在问题描述里说明改了哪些）
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 截图（可选）
+      description: 拖拽图片到文本框即可上传。
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已在实验室重置演示状态后复现
+          required: true
+        - label: 我理解本项目不提供真实 root，模块 action / WebUI 不可用是预期行为
+          required: true
