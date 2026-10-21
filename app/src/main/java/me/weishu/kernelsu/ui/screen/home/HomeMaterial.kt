@@ -75,7 +75,7 @@ import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopup
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.util.fakeAppName
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
 
 @Composable
 fun HomePagerMaterial(
@@ -187,7 +187,7 @@ private fun TopBar(
     onUnlockPanel: () -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val unlockModifier = rememberFakeUnlockTapModifier(onUnlockPanel)
+    val unlockModifier = rememberFakeUnlockModifier(onUnlockPanel)
     LargeFlexibleTopAppBar(
         title = { Text(fakeAppName(), modifier = Modifier.then(unlockModifier)) },
         actions = { RebootListPopup() },

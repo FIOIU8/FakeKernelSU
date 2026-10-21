@@ -160,8 +160,6 @@
     <string name="fake_panel_su_pick">בחר אפליקציה</string>
     <string name="fake_panel_su_random">אפליקציה אקראית</string>
     <string name="fake_panel_stealth">מצב חשאיות</string>
-    <string name="fake_panel_stealth_summary">הסתר את כניסת המעבדה הזו; הקש על כותרת דף \"אודות\" %1$d פעמים כדי לפתוח אותה</string>
-    <string name="fake_panel_tap_count">הקשות לפתיחה: %1$d</string>
     <string name="fake_panel_danger">אזור מסוכן</string>
     <string name="fake_panel_reset">אפס את מצב הסימולציה</string>
     <string name="fake_panel_wipe">מחק את כל הנתונים</string>

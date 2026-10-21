@@ -327,8 +327,6 @@
     <string name="fake_panel_su_pick">Bir uygulama seç</string>
     <string name="fake_panel_su_random">Rastgele uygulama</string>
     <string name="fake_panel_stealth">Gizli mod</string>
-    <string name="fake_panel_stealth_summary">Bu laboratuvar girişini gizle; açmak için Hakkında sayfasının başlığına %1$d kez dokunun</string>
-    <string name="fake_panel_tap_count">Kilit açma dokunuşları: %1$d</string>
     <string name="fake_panel_danger">Tehlikeli bölge</string>
     <string name="fake_panel_reset">Simülasyon durumunu sıfırla</string>
     <string name="fake_panel_wipe">Tüm verileri sil</string>

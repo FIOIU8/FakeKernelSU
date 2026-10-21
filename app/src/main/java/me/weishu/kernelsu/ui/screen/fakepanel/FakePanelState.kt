@@ -2,8 +2,6 @@ package me.weishu.kernelsu.ui.screen.fakepanel
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,8 +66,6 @@ class FakePanelState {
     var suRequestMode by mutableStateOf(FakeState.suRequestMode)
     var stealthMode by mutableStateOf(FakeState.stealthMode)
     var featureStatus by mutableStateOf(FakeState.featureStatusOverride)
-    var unlockTaps by mutableIntStateOf(FakeState.unlockTapCount)
-    var sliderValue by mutableFloatStateOf(FakeState.unlockTapCount.toFloat())
     var showWipeDialog by mutableStateOf(false)
 
     fun selectInstallState(entry: FakeInstallState) {
@@ -186,12 +182,6 @@ class FakePanelState {
         FakeState.featureStatusOverride = value
     }
 
-    fun setUnlockTaps(value: Float) {
-        sliderValue = value
-        unlockTaps = value.toInt()
-        FakeState.unlockTapCount = unlockTaps
-    }
-
     fun resetToDefaults() {
         FakeState.resetAll()
         applyLauncherAlias(LauncherAlias.FAKE)
@@ -211,8 +201,6 @@ class FakePanelState {
         brandName = ""
         stealthMode = false
         featureStatus = FakeState.FEATURE_STATUS_SUPPORTED
-        unlockTaps = 7
-        sliderValue = 7f
         launcherAlias = LauncherAlias.FAKE
         suRequestMode = FakeSuRequestMode.PICK_APP
     }
@@ -223,8 +211,11 @@ fun rememberFakePanelState(): FakePanelState = remember { FakePanelState() }
 
 /**
  * FakeKernelSU control panel: tweaks every piece of fake state the home page,
- * superuser page and module page read from. Hidden behind the stealth mode
- * (Settings entry disappears; the About title tap-count unlocks it).
+ * superuser page and module page read from.
+ *
+ * The lab is never removed from the app: [FakePanelState.updateStealthMode]
+ * only hides the Settings entry, and a long press on the home page title
+ * always brings the lab back.
  */
 @Composable
 fun FakeControlPanelScreen() {

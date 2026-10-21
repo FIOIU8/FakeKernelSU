@@ -161,8 +161,6 @@
     <string name="fake_panel_su_pick">एक ऐप चुनें</string>
     <string name="fake_panel_su_random">यादृच्छिक ऐप</string>
     <string name="fake_panel_stealth">स्टील्थ मोड</string>
-    <string name="fake_panel_stealth_summary">इस लैब प्रविष्टि को छिपाएँ; खोलने के लिए About पेज शीर्षक पर %1$d बार टैप करें</string>
-    <string name="fake_panel_tap_count">अनलॉक टैप: %1$d</string>
     <string name="fake_panel_danger">खतरे का क्षेत्र</string>
     <string name="fake_panel_reset">सिमुलेशन स्थिति रीसेट करें</string>
     <string name="fake_panel_wipe">सभी डेटा मिटाएँ</string>

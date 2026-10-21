@@ -371,8 +371,6 @@
     <string name="fake_panel_su_pick">Chọn ứng dụng</string>
     <string name="fake_panel_su_random">Ứng dụng ngẫu nhiên</string>
     <string name="fake_panel_stealth">Chế độ ẩn</string>
-    <string name="fake_panel_stealth_summary">Ẩn mục vào phòng thí nghiệm này; nhấn tiêu đề trang Giới thiệu %1$d lần để mở</string>
-    <string name="fake_panel_tap_count">Số lần nhấn mở khóa: %1$d</string>
     <string name="fake_panel_danger">Vùng nguy hiểm</string>
     <string name="fake_panel_reset">Đặt lại trạng thái mô phỏng</string>
     <string name="fake_panel_wipe">Xóa toàn bộ dữ liệu</string>

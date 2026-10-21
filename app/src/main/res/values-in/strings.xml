@@ -406,8 +406,6 @@
     <string name="fake_panel_su_pick">Pilih aplikasi</string>
     <string name="fake_panel_su_random">Aplikasi acak</string>
     <string name="fake_panel_stealth">Mode siluman</string>
-    <string name="fake_panel_stealth_summary">Sembunyikan entri lab ini; ketuk judul halaman Tentang %1$d kali untuk membukanya</string>
-    <string name="fake_panel_tap_count">Ketukan buka kunci: %1$d</string>
     <string name="fake_panel_danger">Zona bahaya</string>
     <string name="fake_panel_reset">Setel ulang status simulasi</string>
     <string name="fake_panel_wipe">Hapus semua data</string>

@@ -284,8 +284,6 @@
     <string name="fake_panel_su_pick">アプリを選択</string>
     <string name="fake_panel_su_random">ランダムなアプリ</string>
     <string name="fake_panel_stealth">ステルスモード</string>
-    <string name="fake_panel_stealth_summary">このラボの入口を隠します。アプリ情報ページのタイトルを %1$d 回タップすると開きます</string>
-    <string name="fake_panel_tap_count">解除タップ数：%1$d</string>
     <string name="fake_panel_danger">危険ゾーン</string>
     <string name="fake_panel_reset">シミュレーション状態をリセット</string>
     <string name="fake_panel_wipe">すべてのデータを消去</string>

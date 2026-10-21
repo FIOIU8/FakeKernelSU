@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,14 +37,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -61,6 +61,7 @@ import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
+import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.fakeStr
@@ -75,6 +76,15 @@ import me.weishu.kernelsu.ui.util.fakeStr
 @Composable
 fun FakeControlPanelMaterial(state: FakePanelState) {
     val navigator = LocalNavigator.current
+
+    // Hiding the entry is reversible (long press the home title), but the user
+    // has to know that before the entry disappears, hence the confirm step.
+    val hideEntryDialog = rememberConfirmDialog(
+        onConfirm = { state.updateStealthMode(true) },
+        onDismiss = null,
+    )
+    val hideEntryTitle = stringResource(R.string.fake_panel_stealth)
+    val hideEntryMessage = stringResource(R.string.fake_panel_hide_entry_message)
 
     Scaffold(
         topBar = {
@@ -274,24 +284,24 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                 }
                 SwitchRow(
                     title = stringResource(R.string.fake_panel_stealth),
-                    summary = stringResource(R.string.fake_panel_stealth_summary, state.unlockTaps),
+                    summary = stringResource(R.string.fake_panel_stealth_summary),
                     checked = state.stealthMode,
-                    onCheckedChange = { state.updateStealthMode(it) },
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            hideEntryDialog.showConfirm(
+                                title = hideEntryTitle,
+                                content = hideEntryMessage,
+                            )
+                        } else {
+                            state.updateStealthMode(false)
+                        }
+                    },
                 )
                 Text(
-                    text = stringResource(R.string.fake_panel_tap_count, state.unlockTaps),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                // rememberSliderState(value, steps, valueRange)
-                val sliderState = rememberSliderState(state.sliderValue, 16, 3f..20f)
-                LaunchedEffect(state.sliderValue) {
-                    if (sliderState.value != state.sliderValue) {
-                        sliderState.value = state.sliderValue
-                    }
-                }
-                Slider(
-                    state = sliderState,
-                    onValueChange = { state.setUnlockTaps(it) },
+                    text = stringResource(R.string.fake_panel_long_press_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
 
@@ -443,10 +453,16 @@ private fun SwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        // The whole row toggles, so the switch itself no longer handles clicks.
+        Switch(checked = checked, onCheckedChange = null)
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -544,11 +560,22 @@ private fun RadioRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onSelect,
+            )
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = onSelect)
-        Column(modifier = Modifier.padding(start = 4.dp)) {
+        // M3 default only makes the icon tappable; the whole row selects here
+        // so the label works as a hit target too.
+        RadioButton(selected = selected, onClick = null)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp),
+        ) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             if (summary != null) {
                 Text(

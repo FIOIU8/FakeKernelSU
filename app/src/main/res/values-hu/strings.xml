@@ -211,8 +211,6 @@ Csatlakozzon a %2$s csatornánkhoz</string>
     <string name="fake_panel_su_pick">Válasszon alkalmazást</string>
     <string name="fake_panel_su_random">Véletlen alkalmazás</string>
     <string name="fake_panel_stealth">Rejtett mód</string>
-    <string name="fake_panel_stealth_summary">Rejtse el ezt a labor bejegyzést; koppintson az Információk oldal címére %1$d-szor a megnyitásához</string>
-    <string name="fake_panel_tap_count">Feloldó koppintások: %1$d</string>
     <string name="fake_panel_danger">Veszélyzóna</string>
     <string name="fake_panel_reset">Szimulációs állapot visszaállítása</string>
     <string name="fake_panel_wipe">Összes adat törlése</string>

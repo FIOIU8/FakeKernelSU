@@ -223,8 +223,6 @@
     <string name="fake_panel_su_pick">Vælg en app</string>
     <string name="fake_panel_su_random">Tilfældig app</string>
     <string name="fake_panel_stealth">Skjult tilstand</string>
-    <string name="fake_panel_stealth_summary">Skjul dette lab-punkt; tryk på titlen på Om-siden %1$d gange for at åbne det</string>
-    <string name="fake_panel_tap_count">Tryk for at låse op: %1$d</string>
     <string name="fake_panel_danger">Farezone</string>
     <string name="fake_panel_reset">Nulstil simulationstilstand</string>
     <string name="fake_panel_wipe">Slet alle data</string>

@@ -257,8 +257,6 @@
     <string name="fake_panel_su_pick">앱 선택</string>
     <string name="fake_panel_su_random">무작위 앱</string>
     <string name="fake_panel_stealth">스텔스 모드</string>
-    <string name="fake_panel_stealth_summary">이 랩 진입점을 숨깁니다. 앱 정보 페이지 제목을 %1$d번 탭하면 열립니다</string>
-    <string name="fake_panel_tap_count">잠금 해제 탭 횟수: %1$d</string>
     <string name="fake_panel_danger">위험 영역</string>
     <string name="fake_panel_reset">시뮬레이션 상태 초기화</string>
     <string name="fake_panel_wipe">모든 데이터 삭제</string>

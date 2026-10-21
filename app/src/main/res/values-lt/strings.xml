@@ -160,8 +160,6 @@
     <string name="fake_panel_su_pick">Pasirinkite programėlę</string>
     <string name="fake_panel_su_random">Atsitiktinė programėlė</string>
     <string name="fake_panel_stealth">Slaptasis režimas</string>
-    <string name="fake_panel_stealth_summary">Paslėpti šį laboratorijos įrašą; bakstelėkite Apie puslapio pavadinimą %1$d kartus, kad jį atidarytumėte</string>
-    <string name="fake_panel_tap_count">Atrakinimo paspaudimai: %1$d</string>
     <string name="fake_panel_danger">Pavojinga zona</string>
     <string name="fake_panel_reset">Atstatyti simuliacijos būseną</string>
     <string name="fake_panel_wipe">Ištrinti visus duomenis</string>

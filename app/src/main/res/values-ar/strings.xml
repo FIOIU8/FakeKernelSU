@@ -217,8 +217,6 @@
     <string name="fake_panel_su_pick">اختر تطبيقًا</string>
     <string name="fake_panel_su_random">تطبيق عشوائي</string>
     <string name="fake_panel_stealth">الوضع التخفّي</string>
-    <string name="fake_panel_stealth_summary">إخفاء مدخل هذا المختبر؛ انقر عنوان صفحة \"حول التطبيق\" %1$d مرات لفتحه</string>
-    <string name="fake_panel_tap_count">نقرات الفتح: %1$d</string>
     <string name="fake_panel_danger">منطقة الخطر</string>
     <string name="fake_panel_reset">إعادة تعيين حالة المحاكاة</string>
     <string name="fake_panel_wipe">محو كل البيانات</string>

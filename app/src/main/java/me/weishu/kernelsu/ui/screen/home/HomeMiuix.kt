@@ -71,7 +71,7 @@ import me.weishu.kernelsu.ui.util.BlurredBar
 import me.weishu.kernelsu.ui.util.fakeAppName
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
@@ -236,7 +236,7 @@ private fun TopBar(
     barColor: Color,
     onUnlockPanel: () -> Unit = {},
 ) {
-    val unlockModifier = rememberFakeUnlockTapModifier(onUnlockPanel)
+    val unlockModifier = rememberFakeUnlockModifier(onUnlockPanel)
     BlurredBar(backdrop) {
         Box {
             TopAppBar(

@@ -324,8 +324,6 @@
     <string name="fake_panel_su_pick">Choisir une application</string>
     <string name="fake_panel_su_random">Application aléatoire</string>
     <string name="fake_panel_stealth">Mode furtif</string>
-    <string name="fake_panel_stealth_summary">Masquer cette entrée du labo ; appuyez %1$d fois sur le titre de la page À propos pour l\'ouvrir</string>
-    <string name="fake_panel_tap_count">Appuis pour déverrouiller : %1$d</string>
     <string name="fake_panel_danger">Zone de danger</string>
     <string name="fake_panel_reset">Réinitialiser l\'état de simulation</string>
     <string name="fake_panel_wipe">Effacer toutes les données</string>

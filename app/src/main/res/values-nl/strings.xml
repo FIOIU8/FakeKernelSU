@@ -238,8 +238,6 @@
     <string name="fake_panel_su_pick">Kies een app</string>
     <string name="fake_panel_su_random">Willekeurige app</string>
     <string name="fake_panel_stealth">Stealth-modus</string>
-    <string name="fake_panel_stealth_summary">Verberg deze lab-ingang; tik %1$d keer op de titel van de pagina Over om deze te openen</string>
-    <string name="fake_panel_tap_count">Ontgrendeltikken: %1$d</string>
     <string name="fake_panel_danger">Gevarenzone</string>
     <string name="fake_panel_reset">Simulatiestatus resetten</string>
     <string name="fake_panel_wipe">Alle gegevens wissen</string>

@@ -218,8 +218,6 @@
     <string name="fake_panel_su_pick">Pumili ng app</string>
     <string name="fake_panel_su_random">Random na app</string>
     <string name="fake_panel_stealth">Nakatagong mode</string>
-    <string name="fake_panel_stealth_summary">Itago ang entry na ito ng lab; i-tap ang titulo ng About page nang %1$d beses para buksan</string>
-    <string name="fake_panel_tap_count">Mga tap para mag-unlock: %1$d</string>
     <string name="fake_panel_danger">Delikadong lugar</string>
     <string name="fake_panel_reset">I-reset ang simulation state</string>
     <string name="fake_panel_wipe">Burahin ang lahat ng data</string>

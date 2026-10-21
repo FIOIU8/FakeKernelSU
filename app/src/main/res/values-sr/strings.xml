@@ -91,8 +91,6 @@
     <string name="fake_panel_su_pick">Изаберите апликацију</string>
     <string name="fake_panel_su_random">Насумична апликација</string>
     <string name="fake_panel_stealth">Тајни режим</string>
-    <string name="fake_panel_stealth_summary">Сакриј овај унос лабораторије; тапните наслов странице О апликацији %1$d пута да га отворите</string>
-    <string name="fake_panel_tap_count">Пресети за откључавање: %1$d</string>
     <string name="fake_panel_danger">Опасна зона</string>
     <string name="fake_panel_reset">Ресетуј стање симулације</string>
     <string name="fake_panel_wipe">Обриши све податке</string>

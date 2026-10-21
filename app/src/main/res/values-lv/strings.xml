@@ -213,8 +213,6 @@
     <string name="fake_panel_su_pick">Izvēlieties lietotni</string>
     <string name="fake_panel_su_random">Nejauša lietotne</string>
     <string name="fake_panel_stealth">Slēptā režīms</string>
-    <string name="fake_panel_stealth_summary">Paslēpt šo laboratorijas ierakstu; piesitiet Par lapas virsrakstam %1$d reizes, lai to atvērtu</string>
-    <string name="fake_panel_tap_count">Atbloķēšanas pieskarieni: %1$d</string>
     <string name="fake_panel_danger">Bīstamā zona</string>
     <string name="fake_panel_reset">Atiestatīt simulācijas stāvokli</string>
     <string name="fake_panel_wipe">Dzēst visus datus</string>

@@ -1,42 +1,33 @@
 package me.weishu.kernelsu.ui.util
 
-import android.widget.Toast
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import me.weishu.kernelsu.R
-import me.weishu.kernelsu.fake.FakeState
+import androidx.compose.ui.platform.LocalHapticFeedback
 
 /**
- * Stealth unlock: tapping the About screen title [FakeState.unlockTapCount]
- * times opens the hidden control panel.
+ * Stealth unlock: long-pressing the home page title opens the hidden control
+ * panel.
+ *
+ * A long press is deliberate — a plain tap would fire while scrolling or while
+ * the bar is tapped for other reasons, and the entry is supposed to stay
+ * invisible to anyone who does not already know about it. A haptic tick
+ * confirms the gesture fired, since there is no visual affordance.
  */
 @Composable
-fun rememberFakeUnlockTapModifier(onUnlocked: () -> Unit): Modifier {
-    val context = LocalContext.current
-    var taps by remember { mutableIntStateOf(0) }
+fun rememberFakeUnlockModifier(onUnlocked: () -> Unit): Modifier {
+    val haptic = LocalHapticFeedback.current
+    val currentOnUnlocked by rememberUpdatedState(onUnlocked)
     return Modifier.pointerInput(Unit) {
         detectTapGestures(
-            onTap = {
-                taps += 1
-                val needed = FakeState.unlockTapCount
-                if (taps >= needed) {
-                    taps = 0
-                    onUnlocked()
-                } else if (taps >= 2) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.fake_about_tap_hint, needed - taps),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            }
+            onLongPress = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                currentOnUnlocked()
+            },
         )
     }
 }

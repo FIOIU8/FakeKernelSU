@@ -86,8 +86,6 @@
     <string name="fake_panel_su_pick">Escolle unha app</string>
     <string name="fake_panel_su_random">App aleatoria</string>
     <string name="fake_panel_stealth">Modo oculto</string>
-    <string name="fake_panel_stealth_summary">Ocultar esta entrada do laboratorio; toca o título da páxina Acerca de %1$d veces para abrilo</string>
-    <string name="fake_panel_tap_count">Toques para desbloquear: %1$d</string>
     <string name="fake_panel_danger">Zona perigosa</string>
     <string name="fake_panel_reset">Restablecer o estado da simulación</string>
     <string name="fake_panel_wipe">Borrar todos os datos</string>

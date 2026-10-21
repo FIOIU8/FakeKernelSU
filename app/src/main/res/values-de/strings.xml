@@ -226,8 +226,6 @@
     <string name="fake_panel_su_pick">App auswählen</string>
     <string name="fake_panel_su_random">Zufällige App</string>
     <string name="fake_panel_stealth">Tarnmodus</string>
-    <string name="fake_panel_stealth_summary">Diesen Laboreintrag ausblenden; %1$d-mal auf den Titel der Über-Seite tippen, um ihn zu öffnen</string>
-    <string name="fake_panel_tap_count">Tippen zum Entsperren: %1$d</string>
     <string name="fake_panel_danger">Gefahrenzone</string>
     <string name="fake_panel_reset">Simulationsstatus zurücksetzen</string>
     <string name="fake_panel_wipe">Alle Daten löschen</string>

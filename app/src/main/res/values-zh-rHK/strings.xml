@@ -372,9 +372,6 @@
     <string name="fake_panel_su_mode">模擬 su 請求</string>
     <string name="fake_panel_su_pick">選擇 App</string>
     <string name="fake_panel_su_random">隨機 App</string>
-    <string name="fake_panel_stealth">隱藏模式</string>
-    <string name="fake_panel_stealth_summary">隱藏此實驗室入口；在「關於」頁標題上點擊 %1$d 次即可開啟</string>
-    <string name="fake_panel_tap_count">解鎖點擊次數：%1$d</string>
     <string name="fake_panel_danger">危險區域</string>
     <string name="fake_panel_reset">重設模擬狀態</string>
     <string name="fake_panel_wipe">清除所有資料</string>
@@ -397,4 +394,8 @@
     <string name="launcher_label_short">KSU</string>
     <string name="fake_panel_lkm_gki">GKI</string>
     <string name="fake_panel_lkm_lkm">LKM</string>
+    <string name="fake_panel_stealth">隱藏入口</string>
+    <string name="fake_panel_stealth_summary">從設定中移除實驗室入口</string>
+    <string name="fake_panel_hide_entry_message">隱藏後設定中的實驗室入口將消失。實驗室不會被刪除，長按首頁標題即可重新進入。</string>
+    <string name="fake_panel_long_press_hint">重新進入:長按首頁標題。</string>
 </resources>

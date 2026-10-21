@@ -289,8 +289,6 @@
     <string name="fake_panel_su_pick">Выберите приложение</string>
     <string name="fake_panel_su_random">Случайное приложение</string>
     <string name="fake_panel_stealth">Режим скрытности</string>
-    <string name="fake_panel_stealth_summary">Скрыть этот вход в лабораторию; нажмите заголовок страницы «О программе» %1$d раз, чтобы открыть её</string>
-    <string name="fake_panel_tap_count">Нажатий для разблокировки: %1$d</string>
     <string name="fake_panel_danger">Опасная зона</string>
     <string name="fake_panel_reset">Сбросить состояние симуляции</string>
     <string name="fake_panel_wipe">Удалить все данные</string>

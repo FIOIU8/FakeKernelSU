@@ -160,8 +160,6 @@ Junte-se ao nosso canal %2$s</string>
     <string name="fake_panel_su_pick">Escolher uma app</string>
     <string name="fake_panel_su_random">App aleatória</string>
     <string name="fake_panel_stealth">Modo furtivo</string>
-    <string name="fake_panel_stealth_summary">Ocultar esta entrada do laboratório; toque %1$d vezes no título da página Acerca de para a abrir</string>
-    <string name="fake_panel_tap_count">Toques para desbloquear: %1$d</string>
     <string name="fake_panel_danger">Zona de perigo</string>
     <string name="fake_panel_reset">Repor o estado de simulação</string>
     <string name="fake_panel_wipe">Apagar todos os dados</string>

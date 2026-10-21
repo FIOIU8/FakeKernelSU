@@ -210,8 +210,6 @@
     <string name="fake_panel_su_pick">Alege o aplicație</string>
     <string name="fake_panel_su_random">Aplicație aleatorie</string>
     <string name="fake_panel_stealth">Mod invizibil</string>
-    <string name="fake_panel_stealth_summary">Ascunde această intrare de laborator; atingeți titlul paginii Despre de %1$d ori pentru a o deschide</string>
-    <string name="fake_panel_tap_count">Atingeri de deblocare: %1$d</string>
     <string name="fake_panel_danger">Zonă periculoasă</string>
     <string name="fake_panel_reset">Resetează starea simulării</string>
     <string name="fake_panel_wipe">Șterge toate datele</string>

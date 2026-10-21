@@ -88,8 +88,6 @@
     <string name="fake_panel_su_pick">ជ្រើសកម្មវិធី</string>
     <string name="fake_panel_su_random">កម្មវិធីចៃដន្យ</string>
     <string name="fake_panel_stealth">របៀបលាក់</string>
-    <string name="fake_panel_stealth_summary">លាក់ធាតុចូលបន្ទប់ពិសោធន៍នេះ; ចុចចំណងជើងទំព័រអំពី %1$d ដងដើម្បីបើកវា</string>
-    <string name="fake_panel_tap_count">ចុចសម្រាប់ដោះសោ: %1$d</string>
     <string name="fake_panel_danger">តំបន់គ្រោះថ្នាក់</string>
     <string name="fake_panel_reset">កំណត់ស្ថានភាពក្លែងក្លាយឡើងវិញ</string>
     <string name="fake_panel_wipe">លុបទិន្នន័យទាំងអស់</string>
