@@ -163,6 +163,12 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             checked = state.rootAvailable,
                             onCheckedChange = { state.updateRootAvailable(it) },
                         )
+                        SwitchPreference(
+                            title = stringResource(R.string.fake_panel_lkm_update),
+                            summary = stringResource(R.string.fake_panel_lkm_update_summary),
+                            checked = state.lkmUpdateAvailable,
+                            onCheckedChange = { state.updateLkmUpdateAvailable(it) },
+                        )
                         SectionLabel(stringResource(R.string.fake_panel_su_mode))
                         FakeSuRequestMode.entries.forEach { entry ->
                             RadioButtonPreference(

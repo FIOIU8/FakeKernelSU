@@ -408,6 +408,8 @@
     <string name="fake_panel_state_unsupported_summary">Kernel unsupported, only basic features available</string>
     <string name="fake_panel_root">Root granted</string>
     <string name="fake_panel_root_summary">When off, the manager shows "root access failed" while still reporting as installed (mixed state)</string>
+    <string name="fake_panel_lkm_update">Bundled LKM update</string>
+    <string name="fake_panel_lkm_update_summary">Show the "a newer bundled LKM is available" banner on the home page (LKM mode only)</string>
     <string name="fake_panel_version">Manager version</string>
     <string name="fake_panel_version_hint">Version code, e.g. 13000</string>
     <string name="fake_panel_lkm">LKM mode</string>
