@@ -249,13 +249,14 @@ private fun TopBar(
             )
             // Miuix's TopAppBar takes a plain String title and its own bar
             // gestures eat taps, so the unlock gesture lives on a transparent
-            // hot zone over the title area instead.
+            // hot zone over the title area instead. Fixed size on purpose:
+            // the top bar is measured with an unbounded height, so
+            // fillMaxHeight would collapse to zero there.
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
-                    .width(220.dp)
-                    .fillMaxHeight()
+                    .size(width = 220.dp, height = 56.dp)
                     .then(unlockModifier)
             )
         }
