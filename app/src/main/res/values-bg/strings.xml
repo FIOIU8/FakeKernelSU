@@ -256,8 +256,6 @@
     <string name="fake_panel_su_pick">Изберете приложение</string>
     <string name="fake_panel_su_random">Случайно приложение</string>
     <string name="fake_panel_stealth">Скрит режим</string>
-    <string name="fake_panel_stealth_summary">Скрий този запис на лабораторията; докоснете заглавието на страницата „Относно“ %1$d пъти, за да я отворите</string>
-    <string name="fake_panel_tap_count">Докосвания за отключване: %1$d</string>
     <string name="fake_panel_danger">Опасна зона</string>
     <string name="fake_panel_reset">Нулирай състоянието на симулацията</string>
     <string name="fake_panel_wipe">Изтрий всички данни</string>

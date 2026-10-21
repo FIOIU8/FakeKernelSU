@@ -218,8 +218,6 @@
     <string name="fake_panel_su_pick">Escolher um app</string>
     <string name="fake_panel_su_random">App aleatório</string>
     <string name="fake_panel_stealth">Modo furtivo</string>
-    <string name="fake_panel_stealth_summary">Ocultar esta entrada do laboratório; toque %1$d vezes no título da página Sobre para abri-la</string>
-    <string name="fake_panel_tap_count">Toques para desbloquear: %1$d</string>
     <string name="fake_panel_danger">Zona de perigo</string>
     <string name="fake_panel_reset">Redefinir o estado de simulação</string>
     <string name="fake_panel_wipe">Apagar todos os dados</string>

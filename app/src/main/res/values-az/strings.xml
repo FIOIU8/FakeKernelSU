@@ -178,8 +178,6 @@ Kanalımıza %2$s qoşulun</string>
     <string name="fake_panel_su_pick">Tətbiq seçin</string>
     <string name="fake_panel_su_random">Təsadüfi tətbiq</string>
     <string name="fake_panel_stealth">Gizlətmə rejimi</string>
-    <string name="fake_panel_stealth_summary">Bu laboratoriya girişini gizlət; açmaq üçün Haqqında səhifəsinin başlığına %1$d dəfə toxun</string>
-    <string name="fake_panel_tap_count">Kilid açma toxunuşları: %1$d</string>
     <string name="fake_panel_danger">Təhlükəli zona</string>
     <string name="fake_panel_reset">Simulyasiya vəziyyətini sıfırla</string>
     <string name="fake_panel_wipe">Bütün məlumatları sil</string>

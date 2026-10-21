@@ -40,7 +40,7 @@ import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.util.fakeAppName
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
 
 @Composable
 fun AboutScreenMaterial(
@@ -56,7 +56,7 @@ fun AboutScreenMaterial(
                 title = {
                     Text(
                         text = fakeAppName(),
-                        modifier = rememberFakeUnlockTapModifier {
+                        modifier = rememberFakeUnlockModifier {
                             navigator.push(Route.FakePanel)
                         },
                     )

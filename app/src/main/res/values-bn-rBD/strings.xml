@@ -132,8 +132,6 @@
     <string name="fake_panel_su_pick">একটি অ্যাপ নির্বাচন করুন</string>
     <string name="fake_panel_su_random">র‍্যান্ডম অ্যাপ</string>
     <string name="fake_panel_stealth">গোপন মোড</string>
-    <string name="fake_panel_stealth_summary">এই ল্যাব এন্ট্রি লুকিয়ে রাখুন; খুলতে About পেজের নামে %1$d বার ট্যাপ করুন</string>
-    <string name="fake_panel_tap_count">আনলক ট্যাপ: %1$d</string>
     <string name="fake_panel_danger">বিপজ্জনক অঞ্চল</string>
     <string name="fake_panel_reset">সিমুলেশন অবস্থা রিসেট করুন</string>
     <string name="fake_panel_wipe">সব ডেটা মুছে ফেলুন</string>

@@ -66,7 +66,7 @@ import me.weishu.kernelsu.ui.theme.isInDarkTheme
 import me.weishu.kernelsu.ui.util.BlurredBar
 import me.weishu.kernelsu.ui.util.fakeAppName
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockTapModifier
+import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -127,7 +127,7 @@ fun AboutScreenMiuix(
             BlurredBar(
                 backdrop = barBlurBackdrop,
                 blurActive = blurActive,
-                modifier = rememberFakeUnlockTapModifier {
+                modifier = rememberFakeUnlockModifier {
                     if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
                 },
             ) {

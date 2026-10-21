@@ -159,8 +159,6 @@
     <string name="fake_panel_su_pick">अ‍ॅप निवडा</string>
     <string name="fake_panel_su_random">रँडम अ‍ॅप</string>
     <string name="fake_panel_stealth">स्टेल्थ मोड</string>
-    <string name="fake_panel_stealth_summary">ही लॅब नोंदणी लपवा; उघडण्यासाठी About पेज शीर्षकावर %1$d वारा टॅप करा</string>
-    <string name="fake_panel_tap_count">अनलॉक टॅप: %1$d</string>
     <string name="fake_panel_danger">धोका क्षेत्र</string>
     <string name="fake_panel_reset">सिम्युलेशन स्थिती रीसेट करा</string>
     <string name="fake_panel_wipe">सर्व डेटा पुसा</string>

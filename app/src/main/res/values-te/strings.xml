@@ -101,8 +101,6 @@
     <string name="fake_panel_su_pick">యాప్‌ను ఎంచుకోండి</string>
     <string name="fake_panel_su_random">యాదృచ్ఛిక యాప్</string>
     <string name="fake_panel_stealth">స్టెల్త్ మోడ్</string>
-    <string name="fake_panel_stealth_summary">ఈ ల్యాబ్ ఎంట్రీని దాచు; తెరవడానికి About పేజ్ టైటిల్‌ను %1$d సార్లు టాప్ చేయండి</string>
-    <string name="fake_panel_tap_count">అన్‌లాక్ టాప్‌లు: %1$d</string>
     <string name="fake_panel_danger">ప్రమాద జోన్</string>
     <string name="fake_panel_reset">సిమ్యులేషన్ స్థితిని రీసెట్ చేయి</string>
     <string name="fake_panel_wipe">మొత్తం డేటాను తుడిచేయి</string>

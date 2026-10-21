@@ -145,8 +145,6 @@
     <string name="fake_panel_su_pick">یک برنامه انتخاب کنید</string>
     <string name="fake_panel_su_random">برنامهٔ تصادفی</string>
     <string name="fake_panel_stealth">حالت پنهان</string>
-    <string name="fake_panel_stealth_summary">پنهان کردن مدخل این آزمایشگاه؛ برای باز کردن آن %1$d بار روی عنوان صفحهٔ «درباره» ضربه بزنید</string>
-    <string name="fake_panel_tap_count">ضربه‌های بازکردن: %1$d</string>
     <string name="fake_panel_danger">منطقهٔ خطر</string>
     <string name="fake_panel_reset">بازنشانی حالت شبیه‌سازی</string>
     <string name="fake_panel_wipe">پاک کردن همهٔ داده‌ها</string>

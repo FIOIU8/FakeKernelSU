@@ -66,7 +66,6 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.RadioButtonPreference
-import top.yukonga.miuix.kmp.preference.SliderPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -99,6 +98,15 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
 
     val wipeLabel = stringResource(R.string.fake_panel_wipe)
     val wipeConfirmLabel = stringResource(R.string.fake_panel_wipe_confirm)
+
+    // Hiding the entry is reversible (long press the home title), but the user
+    // has to know that before the entry disappears, hence the confirm step.
+    val hideEntryDialog = rememberConfirmDialog(
+        onConfirm = { state.updateStealthMode(true) },
+        onDismiss = null,
+    )
+    val hideEntryTitle = stringResource(R.string.fake_panel_stealth)
+    val hideEntryMessage = stringResource(R.string.fake_panel_hide_entry_message)
 
     Scaffold(
         topBar = {
@@ -287,16 +295,24 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                         }
                         SwitchPreference(
                             title = stringResource(R.string.fake_panel_stealth),
-                            summary = stringResource(R.string.fake_panel_stealth_summary, state.unlockTaps),
+                            summary = stringResource(R.string.fake_panel_stealth_summary),
                             checked = state.stealthMode,
-                            onCheckedChange = { state.updateStealthMode(it) },
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    hideEntryDialog.showConfirm(
+                                        title = hideEntryTitle,
+                                        content = hideEntryMessage,
+                                    )
+                                } else {
+                                    state.updateStealthMode(false)
+                                }
+                            },
                         )
-                        SliderPreference(
-                            value = state.sliderValue,
-                            onValueChange = { state.setUnlockTaps(it) },
-                            title = stringResource(R.string.fake_panel_tap_count, state.unlockTaps),
-                            valueRange = 3f..20f,
-                            steps = 16,
+                        Text(
+                            text = stringResource(R.string.fake_panel_long_press_hint),
+                            fontSize = 13.sp,
+                            color = colorScheme.onSurfaceVariantSummary,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
                         )
                     }
 

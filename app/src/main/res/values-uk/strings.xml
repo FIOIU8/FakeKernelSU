@@ -260,8 +260,6 @@
     <string name="fake_panel_su_pick">Виберіть застосунок</string>
     <string name="fake_panel_su_random">Випадковий застосунок</string>
     <string name="fake_panel_stealth">Режим прихованості</string>
-    <string name="fake_panel_stealth_summary">Приховати цей вхід до лабораторії; натисніть заголовок сторінки «Про застосунок» %1$d разів, щоб відкрити її</string>
-    <string name="fake_panel_tap_count">Натискань для розблокування: %1$d</string>
     <string name="fake_panel_danger">Небезпечна зона</string>
     <string name="fake_panel_reset">Скинути стан симуляції</string>
     <string name="fake_panel_wipe">Видалити всі дані</string>

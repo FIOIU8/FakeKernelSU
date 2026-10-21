@@ -118,8 +118,6 @@
     <string name="fake_panel_su_pick">Pilih aplikasi</string>
     <string name="fake_panel_su_random">Aplikasi rawak</string>
     <string name="fake_panel_stealth">Mod senyap</string>
-    <string name="fake_panel_stealth_summary">Sembunyikan entri lab ini; ketuk tajuk halaman About %1$d kali untuk membukanya</string>
-    <string name="fake_panel_tap_count">Ketukan buka kunci: %1$d</string>
     <string name="fake_panel_danger">Zon bahaya</string>
     <string name="fake_panel_reset">Set semula keadaan simulasi</string>
     <string name="fake_panel_wipe">Kosongkan semua data</string>

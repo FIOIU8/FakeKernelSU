@@ -260,8 +260,6 @@
     <string name="fake_panel_su_pick">Wybierz aplikację</string>
     <string name="fake_panel_su_random">Losowa aplikacja</string>
     <string name="fake_panel_stealth">Tryb ukryty</string>
-    <string name="fake_panel_stealth_summary">Ukryj ten wpis laboratorium; dotknij tytułu strony „Informacje” %1$d razy, aby ją otworzyć</string>
-    <string name="fake_panel_tap_count">Doteków do odblokowania: %1$d</string>
     <string name="fake_panel_danger">Strefa niebezpieczna</string>
     <string name="fake_panel_reset">Zresetuj stan symulacji</string>
     <string name="fake_panel_wipe">Wyczyść wszystkie dane</string>

@@ -416,9 +416,10 @@
     <string name="fake_panel_su_mode">模拟 su 请求</string>
     <string name="fake_panel_su_pick">自选应用</string>
     <string name="fake_panel_su_random">随机应用</string>
-    <string name="fake_panel_stealth">仿真模式</string>
-    <string name="fake_panel_stealth_summary">隐藏实验室入口;连点关于页标题 %1$d 次进入</string>
-    <string name="fake_panel_tap_count">连点次数:%1$d 次</string>
+    <string name="fake_panel_stealth">隐藏入口</string>
+    <string name="fake_panel_stealth_summary">从设置中移除实验室入口</string>
+    <string name="fake_panel_hide_entry_message">隐藏后设置中的实验室入口将消失。实验室不会被删除，长按首页标题即可重新进入。</string>
+    <string name="fake_panel_long_press_hint">重新进入:长按首页标题。</string>
     <string name="fake_panel_danger">危险区域</string>
     <string name="fake_panel_reset">重置模拟状态</string>
     <string name="fake_panel_wipe">清除全部数据</string>

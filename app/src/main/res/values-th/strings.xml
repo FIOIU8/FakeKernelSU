@@ -285,8 +285,6 @@
     <string name="fake_panel_su_pick">เลือกแอป</string>
     <string name="fake_panel_su_random">แอปแบบสุ่ม</string>
     <string name="fake_panel_stealth">โหมดซ่อนเร้น</string>
-    <string name="fake_panel_stealth_summary">ซ่อนทางเข้าห้องทดลองนี้; แตะหัวเรื่องหน้า \"เกี่ยวกับ\" %1$d ครั้งเพื่อเปิด</string>
-    <string name="fake_panel_tap_count">จำนวนแตะปลดล็อก: %1$d</string>
     <string name="fake_panel_danger">เขตอันตราย</string>
     <string name="fake_panel_reset">รีเซ็ตสถานะการจำลอง</string>
     <string name="fake_panel_wipe">ลบข้อมูลทั้งหมด</string>

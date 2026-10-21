@@ -209,8 +209,6 @@ Liitu meie %2$si kanaliga</string>
     <string name="fake_panel_su_pick">Valige rakendus</string>
     <string name="fake_panel_su_random">Juhuslik rakendus</string>
     <string name="fake_panel_stealth">Varjatud režiim</string>
-    <string name="fake_panel_stealth_summary">Peida see lab-i kirje; puudutage Teave lehe pealkirja %1$d korda, et see avada</string>
-    <string name="fake_panel_tap_count">Luku avamise puudutused: %1$d</string>
     <string name="fake_panel_danger">Ohtlik tsoon</string>
     <string name="fake_panel_reset">Lähtesta simulatsiooni olek</string>
     <string name="fake_panel_wipe">Kustuta kõik andmed</string>

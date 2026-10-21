@@ -179,8 +179,6 @@
     <string name="fake_panel_su_pick">Izberite aplikacijo</string>
     <string name="fake_panel_su_random">Naključna aplikacija</string>
     <string name="fake_panel_stealth">Skrivni način</string>
-    <string name="fake_panel_stealth_summary">Skrij ta vstop v laboratorij; tapnite naslov strani O aplikaciji %1$d-krat, da ga odprete</string>
-    <string name="fake_panel_tap_count">Dotiki za odklepanje: %1$d</string>
     <string name="fake_panel_danger">Nevarno območje</string>
     <string name="fake_panel_reset">Ponastavi stanje simulacije</string>
     <string name="fake_panel_wipe">Izbriši vse podatke</string>

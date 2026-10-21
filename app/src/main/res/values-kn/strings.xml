@@ -146,8 +146,6 @@
     <string name="fake_panel_su_pick">ಆ್ಯಪ್ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="fake_panel_su_random">ರ್ಯಾಂಡಮ್ ಆ್ಯಪ್</string>
     <string name="fake_panel_stealth">ಸ್ಟೆಲ್ತ್ ಮೋಡ್</string>
-    <string name="fake_panel_stealth_summary">ಈ ಲ್ಯಾಬ್ ನಮೂದನ್ನು ಮರೆಮಾಚಿ; ತೆರೆಯಲು About ಪುಟ ಶೀರ್ಷಿಕೆಯನ್ನು %1$d ಬಾರಿ ಟ್ಯಾಪ್ ಮಾಡಿ</string>
-    <string name="fake_panel_tap_count">ಅನ್‌ಲಾಕ್ ಟ್ಯಾಪ್‌ಗಳು: %1$d</string>
     <string name="fake_panel_danger">ಅಪಾಯ ಕ್ಷೇತ್ರ</string>
     <string name="fake_panel_reset">ಸಿಮ್ಯುಲೇಶನ್ ಸ್ಥಿತಿ ರೀಸೆಟ್ ಮಾಡಿ</string>
     <string name="fake_panel_wipe">ಎಲ್ಲಾ ಡೇಟಾ ಅಳಿಸಿ</string>

@@ -422,9 +422,10 @@
     <string name="fake_panel_su_mode">Simulated su request</string>
     <string name="fake_panel_su_pick">Pick an app</string>
     <string name="fake_panel_su_random">Random app</string>
-    <string name="fake_panel_stealth">Stealth mode</string>
-    <string name="fake_panel_stealth_summary">Hide this lab entry; tap the About page title %1$d times to open it</string>
-    <string name="fake_panel_tap_count">Unlock taps: %1$d</string>
+    <string name="fake_panel_stealth">Hide entry</string>
+    <string name="fake_panel_stealth_summary">Remove the lab entry from Settings</string>
+    <string name="fake_panel_hide_entry_message">The lab entry will disappear from Settings. The lab itself is not removed — long-press the title on the home page to open it again.</string>
+    <string name="fake_panel_long_press_hint">To reopen the lab: long-press the title on the home page.</string>
     <string name="fake_panel_danger">Danger zone</string>
     <string name="fake_panel_reset">Reset simulation state</string>
     <string name="fake_panel_wipe">Wipe all data</string>

@@ -2,6 +2,8 @@ package me.weishu.kernelsu.fake
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import me.weishu.kernelsu.ksuApp
 import java.io.File
 
@@ -204,15 +206,23 @@ object FakeState {
 
     // -------------------------------------------------------------- stealth
 
-    /** When true, the control panel entry disappears from Settings. */
+    /**
+     * When true, the control panel entry disappears from Settings. The lab
+     * itself is never removed — a long press on the home title still opens it.
+     *
+     * Backed by a snapshot state so the Settings page drops the entry the
+     * moment the switch is flipped, without needing a restart.
+     */
     var stealthMode: Boolean
-        get() = prefs.getBoolean(KEY_STEALTH, false)
-        set(value) = prefs.edit().putBoolean(KEY_STEALTH, value).apply()
+        get() = stealthModeState.value
+        set(value) {
+            stealthModeState.value = value
+            prefs.edit().putBoolean(KEY_STEALTH, value).apply()
+        }
 
-    /** Taps on the About screen title needed to open the hidden panel. */
-    var unlockTapCount: Int
-        get() = prefs.getInt(KEY_UNLOCK_TAPS, 7).coerceIn(3, 20)
-        set(value) = prefs.edit().putInt(KEY_UNLOCK_TAPS, value.coerceIn(3, 20)).apply()
+    private val stealthModeState: MutableState<Boolean> by lazy {
+        mutableStateOf(prefs.getBoolean(KEY_STEALTH, false))
+    }
 
     // --------------------------------------------------------- feature status
 
@@ -277,6 +287,7 @@ object FakeState {
 
     fun resetAll() {
         prefs.edit().clear().apply()
+        stealthModeState.value = false
         runCatching { adbRoot.deleteRecursively() }
     }
 
@@ -302,7 +313,6 @@ object FakeState {
     private const val KEY_IN_APP_NAME = "in_app_name"
     private const val KEY_BRAND_NAME = "brand_name"
     private const val KEY_STEALTH = "stealth_mode"
-    private const val KEY_UNLOCK_TAPS = "unlock_taps"
     private const val KEY_SU_MODE = "su_request_mode"
     private const val KEY_FEATURE_STATUS = "feature_status"
 
