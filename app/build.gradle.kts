@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.lsplugin.apksign)
     id("kotlin-parcelize")
 }
 
@@ -24,12 +23,12 @@ val defaultManagerName = if (isPrBuild) "KernelSU PR" else "KernelSU"
 val managerPackageName = project.findProperty("KSU_PACKAGE_NAME")?.toString() ?: defaultManagerPackageName
 val managerName = project.findProperty("KSU_NAME")?.toString() ?: defaultManagerName
 
-apksign {
-    storeFileProperty = "KEYSTORE_FILE"
-    storePasswordProperty = "KEYSTORE_PASSWORD"
-    keyAliasProperty = "KEY_ALIAS"
-    keyPasswordProperty = "KEY_PASSWORD"
-}
+// ---------------------------------------------------------------- 发布签名
+// 四个键走 Gradle 属性（-PKEYSTORE_FILE=... 或 gradle.properties / ~/.gradle/gradle.properties）。
+// 密钥库不存在时回退到 debug 证书，保证 debug/release 都能构建。
+val releaseKeystore = providers.gradleProperty("KEYSTORE_FILE").orNull
+    ?.let { rootProject.file(it) }
+    ?.takeIf { it.exists() }
 
 val baseCFlags = listOf(
     "-Wall", "-Qunused-arguments", "-fvisibility=hidden", "-fvisibility-inlines-hidden",
@@ -41,13 +40,30 @@ val baseCppFlags = baseCFlags + "-fno-rtti"
 android {
     namespace = "me.weishu.kernelsu"
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = providers.gradleProperty("KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.gradleProperty("KEY_ALIAS").orNull
+                keyPassword = providers.gradleProperty("KEY_PASSWORD").orNull
+            }
+        }
+    }
+
     buildTypes {
         debug {
+            // activity-alias 会在运行时切换启动器入口，debug 包不需要额外签名处理
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             vcsInfo.include = false
+            signingConfig = if (releaseKeystore != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
