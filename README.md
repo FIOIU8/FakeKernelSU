@@ -1,8 +1,6 @@
 # FakeKernelSU
 
-<!-- 推送后请将下方徽章与克隆链接中的 OWNER/REPO 替换为实际路径 -->
-
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/FIOIU8/FakeKernelSU/actions/workflows/ci.yml/badge.svg)](https://github.com/FIOIU8/FakeKernelSU/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![minSdk 31](https://img.shields.io/badge/minSdk-31%20(Android%2012)-green.svg)](https://developer.android.com/)
 [![Platform](https://img.shields.io/badge/Platform-Android-lightgrey.svg)](https://www.android.com/)
