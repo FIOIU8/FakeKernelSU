@@ -54,6 +54,7 @@ import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.util.fakeStr
 
 /**
  * Material 3 flavour of the FakeKernelSU control panel.
@@ -66,7 +67,7 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.fake_panel_title)) },
+                title = { Text(fakeStr(R.string.fake_panel_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navigator.pop() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -151,8 +152,8 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                     style = MaterialTheme.typography.titleSmall,
                 )
                 LkmModeRow(
-                    selected = state.lkmMode,
-                    onSelect = { state.updateLkmMode(it) },
+                    selected = state.workingMode,
+                    onSelect = { state.selectWorkingMode(it) },
                 )
             }
 
@@ -207,6 +208,22 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                     )
                 }
                 Spacer(Modifier.height(8.dp))
+                PanelTextField(
+                    value = state.brandName,
+                    label = stringResource(R.string.fake_panel_brand),
+                    placeholder = stringResource(R.string.fake_panel_brand_summary),
+                    onValueChange = { state.updateBrandName(it) },
+                )
+                Text(
+                    text = stringResource(
+                        R.string.fake_panel_brand_in_use,
+                        state.brandName.ifBlank {
+                            state.inAppName.ifBlank { stringResource(R.string.app_name) }
+                        },
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 PanelTextField(
                     value = state.inAppName,
                     label = stringResource(R.string.fake_panel_in_app_name),
@@ -281,7 +298,7 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
             }
 
             Text(
-                text = stringResource(R.string.fake_panel_disclaimer),
+                text = fakeStr(R.string.fake_panel_disclaimer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -422,26 +439,16 @@ private fun RadioRow(
 }
 
 @Composable
-private fun LkmModeRow(selected: Boolean?, onSelect: (Boolean?) -> Unit) {
+private fun LkmModeRow(selected: FakeWorkingMode, onSelect: (FakeWorkingMode) -> Unit) {
     Column(modifier = Modifier.selectableGroup()) {
-        RadioRow(
-            selected = selected == null,
-            title = stringResource(R.string.fake_panel_lkm_gki),
-            summary = null,
-            onSelect = { onSelect(null) },
-        )
-        RadioRow(
-            selected = selected == true,
-            title = stringResource(R.string.fake_panel_lkm_lkm),
-            summary = null,
-            onSelect = { onSelect(true) },
-        )
-        RadioRow(
-            selected = selected == false,
-            title = stringResource(R.string.fake_panel_lkm_none),
-            summary = null,
-            onSelect = { onSelect(false) },
-        )
+        FakeWorkingMode.entries.forEach { mode ->
+            RadioRow(
+                selected = selected == mode,
+                title = stringResource(mode.labelRes()),
+                summary = null,
+                onSelect = { onSelect(mode) },
+            )
+        }
     }
 }
 
@@ -477,4 +484,11 @@ internal fun FakeSeccompMode.labelRes(): Int = when (this) {
     FakeSeccompMode.DISABLED -> R.string.seccomp_status_disabled
     FakeSeccompMode.STRICT -> R.string.seccomp_status_strict
     FakeSeccompMode.FILTER -> R.string.seccomp_status_filter
+}
+
+internal fun FakeWorkingMode.labelRes(): Int = when (this) {
+    FakeWorkingMode.GKI -> R.string.fake_panel_lkm_gki
+    FakeWorkingMode.LKM -> R.string.fake_panel_lkm_lkm
+    FakeWorkingMode.NONE -> R.string.fake_panel_lkm_none
+    FakeWorkingMode.JAILBREAK -> R.string.jailbreak_mode
 }

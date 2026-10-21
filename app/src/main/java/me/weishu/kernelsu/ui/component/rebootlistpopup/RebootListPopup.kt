@@ -2,6 +2,7 @@ package me.weishu.kernelsu.ui.component.rebootlistpopup
 
 import android.content.Context
 import android.os.PowerManager
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -9,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
@@ -42,16 +44,30 @@ fun getRebootListOption(): List<RebootListOption> {
 /** Reboots on selection, but confirms first in jailbreak mode where a plain reboot drops root. */
 @Composable
 fun rememberRebootAction(): (String) -> Unit {
+    val context = LocalContext.current
     val title = stringResource(R.string.reboot)
     val message = stringResource(R.string.jailbreak_reboot_warning)
-    val confirmDialog = rememberConfirmDialog(onConfirm = { reboot() })
+    val rebootedMessage = stringResource(R.string.fake_jailbreak_rebooted)
 
-    return remember(title, message, confirmDialog) {
+    // FakeKernelSU: reboot() is a no-op, so simulate "root is gone after reboot"
+    // by leaving jailbreak mode and telling the user.
+    val doReboot: (String) -> Unit = { reason ->
+        val wasJailbreak = FakeState.jailbreakMode
+        reboot(reason)
+        if (wasJailbreak) {
+            FakeState.clearJailbreak()
+            Toast.makeText(context, rebootedMessage, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    val confirmDialog = rememberConfirmDialog(onConfirm = { doReboot("") })
+
+    return remember(title, message, rebootedMessage, confirmDialog) {
         { reason ->
             if (Natives.isLateLoadMode && reason.isEmpty()) {
                 confirmDialog.showConfirm(title = title, content = message)
             } else {
-                reboot(reason)
+                doReboot(reason)
             }
         }
     }

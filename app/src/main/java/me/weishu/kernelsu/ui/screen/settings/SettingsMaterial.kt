@@ -62,6 +62,7 @@ import me.weishu.kernelsu.ui.component.material.SendLogBottomSheet
 import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
+import me.weishu.kernelsu.ui.util.fakeStr
 
 /**
  * @author weishu
@@ -102,9 +103,9 @@ fun SettingPagerMaterial(
                     content = listOf {
                         SegmentedListItem(
                             onClick = actions.onOpenFakePanel,
-                            headlineContent = { Text(stringResource(id = R.string.fake_settings_entry)) },
-                            supportingContent = { Text(stringResource(id = R.string.fake_settings_entry_summary)) },
-                            leadingContent = { Icon(Icons.Filled.Science, stringResource(id = R.string.fake_settings_entry)) },
+                            headlineContent = { Text(fakeStr(R.string.fake_settings_entry)) },
+                            supportingContent = { Text(fakeStr(R.string.fake_settings_entry_summary)) },
+                            leadingContent = { Icon(Icons.Filled.Science, fakeStr(R.string.fake_settings_entry)) },
                             trailingContent = {
                                 Icon(
                                     Icons.AutoMirrored.Filled.KeyboardArrowRight,

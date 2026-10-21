@@ -10,8 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -123,6 +121,12 @@ fun SuperUserPagerMiuix(
     val backdrop = rememberBlurBackdrop(enableBlur)
     val blurActive = backdrop != null
     val barColor = if (blurActive) Color.Transparent else colorScheme.surface
+    // FakeKernelSU: the su-request simulation now lives in the overflow menu,
+    // so its flow is owned here instead of being a list row.
+    val fakeSuRequest = rememberFakeSuRequestController(
+        uiState = uiState,
+        onRefresh = actions.onRefresh,
+    )
 
     Scaffold(
         topBar = {
@@ -216,12 +220,12 @@ fun SuperUserPagerMiuix(
                                     },
                                     content = {
                                         val isMultiUser = uiState.userIds.size > 1
-                                        val size = if (isMultiUser) 2 else 1
+                                        val filterCount = if (isMultiUser) 2 else 1
                                         ListPopupColumn {
                                             DropdownImpl(
                                                 text = stringResource(R.string.show_system_apps),
                                                 isSelected = uiState.showSystemApps,
-                                                optionSize = size,
+                                                optionSize = filterCount,
                                                 onSelectedIndexChange = {
                                                     actions.onToggleShowSystemApps()
                                                     showTopPopup.value = false
@@ -232,7 +236,7 @@ fun SuperUserPagerMiuix(
                                                 DropdownImpl(
                                                     text = stringResource(R.string.show_only_primary_user_apps),
                                                     isSelected = uiState.showOnlyPrimaryUserApps,
-                                                    optionSize = size,
+                                                    optionSize = filterCount,
                                                     onSelectedIndexChange = {
                                                         actions.onToggleShowOnlyPrimaryUserApps()
                                                         showTopPopup.value = false
@@ -240,6 +244,25 @@ fun SuperUserPagerMiuix(
                                                     index = 1
                                                 )
                                             }
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                                                thickness = 1.5.dp,
+                                            )
+
+                                            // FakeKernelSU: simulate a root request
+                                            // (moved out of the list so the first row
+                                            // is a real app).
+                                            DropdownImpl(
+                                                text = stringResource(R.string.fake_su_trigger),
+                                                isSelected = false,
+                                                optionSize = filterCount + 1,
+                                                onSelectedIndexChange = {
+                                                    fakeSuRequest.trigger()
+                                                    showTopPopup.value = false
+                                                },
+                                                index = filterCount,
+                                            )
                                         }
                                     }
                                 )
@@ -451,61 +474,6 @@ fun SuperUserPagerMiuix(
                         ),
                         overscrollEffect = null,
                     ) {
-                        item(key = "fake-su-request") {
-                            FakeSuRequestHost(
-                                uiState = uiState,
-                                onRefresh = actions.onRefresh,
-                            ) { onClick ->
-                                Card(
-                                    modifier = Modifier
-                                        .padding(horizontal = 12.dp)
-                                        .padding(bottom = 6.dp),
-                                    onClick = onClick,
-                                    showIndication = true,
-                                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Terminal,
-                                            tint = colorScheme.onSurface,
-                                            modifier = Modifier
-                                                .padding(end = 10.dp)
-                                                .size(24.dp),
-                                            contentDescription = null
-                                        )
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.fake_su_trigger),
-                                                fontWeight = FontWeight(550),
-                                                color = colorScheme.onSurface,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.fake_su_trigger_summary),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight(550),
-                                                color = colorScheme.onSurfaceVariantSummary,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
-                                        Image(
-                                            modifier = Modifier
-                                                .padding(start = 8.dp)
-                                                .size(width = 10.dp, height = 16.dp),
-                                            imageVector = MiuixIcons.Basic.ArrowRight,
-                                            contentDescription = null,
-                                            colorFilter = ColorFilter.tint(colorScheme.onSurfaceVariantActions),
-                                        )
-                                    }
-                                }
-                            }
-                        }
                         items(uiState.groupedApps, key = { it.uid }, contentType = { "group" }) { group ->
                             val expanded = expandedUids.value.contains(group.uid)
                             Column {
@@ -542,6 +510,8 @@ fun SuperUserPagerMiuix(
             }
         }
     }
+
+    fakeSuRequest.Dialogs()
 }
 
 @Composable

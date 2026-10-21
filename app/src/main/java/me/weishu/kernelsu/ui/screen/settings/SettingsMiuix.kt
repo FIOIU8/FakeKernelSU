@@ -51,6 +51,7 @@ import me.weishu.kernelsu.ui.component.miuix.SendLogDialog
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.util.BlurredBar
+import me.weishu.kernelsu.ui.util.fakeStr
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
@@ -116,13 +117,13 @@ fun SettingPagerMiuix(
                                 .fillMaxWidth(),
                         ) {
                             ArrowPreference(
-                                title = stringResource(id = R.string.fake_settings_entry),
-                                summary = stringResource(id = R.string.fake_settings_entry_summary),
+                                title = fakeStr(R.string.fake_settings_entry),
+                                summary = fakeStr(R.string.fake_settings_entry_summary),
                                 startAction = {
                                     Icon(
                                         Icons.Rounded.Science,
                                         modifier = Modifier.padding(end = 6.dp),
-                                        contentDescription = stringResource(id = R.string.fake_settings_entry),
+                                        contentDescription = fakeStr(R.string.fake_settings_entry),
                                         tint = colorScheme.onBackground
                                     )
                                 },

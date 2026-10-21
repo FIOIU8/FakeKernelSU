@@ -134,6 +134,16 @@ object FakeState {
         get() = prefs.getInt(KEY_KERNEL_UAPI, 32513)
         set(value) = prefs.edit().putInt(KEY_KERNEL_UAPI, value).apply()
 
+    /**
+     * Jailbreak (late-load) mode. Stored as a string like [lkmMode] so more
+     * late-load methods can be added later without a migration.
+     */
+    var jailbreakMode: Boolean
+        get() = prefs.getString(KEY_JAILBREAK_MODE, JAILBREAK_OFF) == JAILBREAK_ON
+        set(value) = prefs.edit()
+            .putString(KEY_JAILBREAK_MODE, if (value) JAILBREAK_ON else JAILBREAK_OFF)
+            .apply()
+
     // ------------------------------------------- home system info overrides
 
     /** Empty string -> use the real device value. */
@@ -184,6 +194,14 @@ object FakeState {
         get() = prefs.getString(KEY_IN_APP_NAME, "") ?: ""
         set(value) = prefs.edit().putString(KEY_IN_APP_NAME, value).apply()
 
+    /**
+     * Brand token used everywhere the app names itself in text ("X Lab",
+     * "X is not installed", ...). Empty = fall back to [inAppName] / app_name.
+     */
+    var brandName: String
+        get() = prefs.getString(KEY_BRAND_NAME, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_BRAND_NAME, value).apply()
+
     // -------------------------------------------------------------- stealth
 
     /** When true, the control panel entry disappears from Settings. */
@@ -229,7 +247,24 @@ object FakeState {
     /** 临时卸载: only clears the flag. */
     fun uninstallTemporary() {
         installed = false
+        jailbreakMode = false
         stateOverride = FakeInstallState.AUTO
+    }
+
+    /**
+     * Enter jailbreak (late-load) mode: real devices acquire root at runtime
+     * through a kernel module, so this also implies LKM mode and an install.
+     */
+    fun applyJailbreak() {
+        if (!installed) performFakeInstall()
+        lkmMode = true
+        jailbreakMode = true
+        FakeSu.logLateLoad()
+    }
+
+    /** Leaving jailbreak mode (manual toggle or a simulated reboot). */
+    fun clearJailbreak() {
+        jailbreakMode = false
     }
 
     /** 永久卸载: clears flag + all local demo data. */
@@ -251,6 +286,10 @@ object FakeState {
     private const val KEY_ROOT_AVAILABLE = "root_available"
     private const val KEY_KSU_VERSION = "ksu_version"
     private const val KEY_LKM_MODE = "lkm_mode"
+    private const val KEY_JAILBREAK_MODE = "jailbreak_mode"
+
+    private const val JAILBREAK_ON = "on"
+    private const val JAILBREAK_OFF = "off"
     private const val KEY_KERNEL_UAPI = "kernel_uapi"
     private const val KEY_DEVICE_MODEL = "device_model"
     private const val KEY_KERNEL_VERSION = "kernel_version"
@@ -261,6 +300,7 @@ object FakeState {
     private const val KEY_MANAGER_VERSION_NAME = "manager_version_name"
     private const val KEY_LAUNCHER_ALIAS = "launcher_alias"
     private const val KEY_IN_APP_NAME = "in_app_name"
+    private const val KEY_BRAND_NAME = "brand_name"
     private const val KEY_STEALTH = "stealth_mode"
     private const val KEY_UNLOCK_TAPS = "unlock_taps"
     private const val KEY_SU_MODE = "su_request_mode"

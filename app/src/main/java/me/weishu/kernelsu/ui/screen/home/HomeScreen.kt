@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,8 +22,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.navigation3.Navigator
 import me.weishu.kernelsu.ui.navigation3.Route
@@ -60,12 +63,23 @@ fun HomePager(
         onPauseOrDispose { }
     }
 
+    val jailbreakConfirm = rememberConfirmDialog(
+        onConfirm = {
+            FakeState.applyJailbreak()
+            viewModel.refresh()
+            Toast.makeText(context, R.string.fake_jailbreak_enabled, Toast.LENGTH_SHORT).show()
+        },
+    )
+    val jailbreakTitle = stringResource(R.string.jailbreak_mode)
+    val jailbreakMessage = stringResource(R.string.fake_jailbreak_confirm)
+
     val actions = HomeActions(
         onInstallClick = { navigator.push(Route.Install) },
         onOpenUrl = uriHandler::openUri,
         onJailbreakClick = {
-            // FakeKernelSU: late-load/jailbreak needs a real kernel module.
-            Toast.makeText(context, R.string.fake_unsupported_action, Toast.LENGTH_LONG).show()
+            // Simulated late-load: enter jailbreak mode instead of pretending
+            // the action is unsupported.
+            jailbreakConfirm.showConfirm(title = jailbreakTitle, content = jailbreakMessage)
         },
         // Stealth-friendly entry to the control panel: the bottom bar is hidden
         // until the fake install happens, so without this the lab would be

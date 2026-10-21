@@ -60,6 +60,17 @@ object FakeSu {
         )
     }
 
+    /** Written when the user enters jailbreak (late-load) mode. */
+    fun logLateLoad() {
+        appendLine(
+            "late_load",
+            mapOf(
+                "method" to "runtime",
+                "uid" to Natives.ROOT_UID.toString(),
+            ),
+        )
+    }
+
     /**
      * @param granted  whether the user tapped "allow" in the fake dialog
      * @param remember whether the grant should persist (allowSu profile)

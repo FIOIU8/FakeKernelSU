@@ -450,4 +450,14 @@
     <string name="fake_panel_selinux_mode">SELinux 模式</string>
     <string name="fake_panel_seccomp_status">Seccomp 状态</string>
     <string name="fake_follow_system">跟随系统</string>
+
+    <!-- FakeKernelSU: 越狱模式 -->
+    <string name="fake_jailbreak_confirm">进入越狱模式?\n\n将模拟运行期获取 root(late-load),重启后失效。</string>
+    <string name="fake_jailbreak_enabled">越狱模式已生效</string>
+    <string name="fake_jailbreak_rebooted">已模拟重启:越狱模式已退出</string>
+
+    <!-- FakeKernelSU: 品牌名 -->
+    <string name="fake_panel_brand">品牌名</string>
+    <string name="fake_panel_brand_summary">用于应用内文案;空 = 应用名</string>
+    <string name="fake_panel_brand_in_use">当前显示为 %1$s</string>
 </resources>
