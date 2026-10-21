@@ -1,5 +1,8 @@
 package me.weishu.kernelsu.ui.screen.fakepanel
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,13 +58,18 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.fake.FakeInstallState
 import me.weishu.kernelsu.fake.FakeSeccompMode
 import me.weishu.kernelsu.fake.FakeSelinuxMode
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
+import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.fakeStr
 
 /**
- * Material 3 flavour of the FakeKernelSU control panel.
+ * Material 3 flavour of the FakeKernelSU lab.
+ *
+ * Layout (#3): a status overview strip on top, then five collapsible sections.
+ * Both skins share [FakePanelState] so the two are feature-identical.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,8 +96,13 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(13.dp),
         ) {
-            // ---------------------------------------------------- install state
-            PanelCard(title = stringResource(R.string.fake_panel_state)) {
+            StatusOverview(state)
+
+            // ------------------------------------------------------ runtime
+            SectionCard(
+                title = stringResource(R.string.fake_panel_runtime),
+                section = FakePanelSection.RUNTIME,
+            ) {
                 FakeInstallState.entries.forEach { entry ->
                     RadioRow(
                         selected = state.stateOverride == entry,
@@ -94,34 +111,47 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                         onSelect = { state.selectInstallState(entry) },
                     )
                 }
-            }
-
-            // ------------------------------------------------------ root state
-            PanelCard(title = stringResource(R.string.fake_panel_root)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(
-                        checked = state.rootAvailable,
-                        onCheckedChange = { state.updateRootAvailable(it) },
-                    )
-                    Text(
-                        text = stringResource(R.string.fake_panel_root_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 12.dp),
-                    )
+                SwitchRow(
+                    title = stringResource(R.string.fake_panel_root),
+                    summary = stringResource(R.string.fake_panel_root_summary),
+                    checked = state.rootAvailable,
+                    onCheckedChange = { state.updateRootAvailable(it) },
+                )
+                Text(
+                    text = stringResource(R.string.fake_panel_su_mode),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Column(modifier = Modifier.selectableGroup()) {
+                    FakeSuRequestMode.entries.forEach { entry ->
+                        RadioRow(
+                            selected = state.suRequestMode == entry,
+                            title = stringResource(entry.labelRes()),
+                            summary = null,
+                            onSelect = { state.selectSuRequestMode(entry) },
+                        )
+                    }
                 }
+                PanelDropdown(
+                    label = stringResource(R.string.fake_panel_feature_status),
+                    value = stringResource(featureStatusLabelRes(state.featureStatus)),
+                    options = FEATURE_STATUS_VALUES.map { stringResource(featureStatusLabelRes(it)) },
+                    onSelect = { state.selectFeatureStatus(FEATURE_STATUS_VALUES[it]) },
+                    summary = stringResource(R.string.fake_panel_feature_status_summary),
+                )
             }
 
-            // ----------------------------------------------------------- version
-            PanelCard(title = stringResource(R.string.fake_panel_version)) {
-                OutlinedTextField(
+            // ---------------------------------------------- version and mode
+            SectionCard(
+                title = stringResource(R.string.fake_panel_version_mode),
+                section = FakePanelSection.VERSION,
+            ) {
+                PanelTextField(
                     value = state.ksuVersion,
+                    label = stringResource(R.string.fake_panel_ksu_version),
+                    placeholder = stringResource(R.string.fake_panel_ksu_version_summary),
+                    numeric = true,
                     onValueChange = { state.updateKsuVersion(it) },
-                    label = { Text(stringResource(R.string.fake_panel_version_hint)) },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 PanelTextField(
                     value = state.managerVersionCode,
@@ -129,12 +159,6 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                     placeholder = stringResource(R.string.fake_panel_manager_version_code_summary),
                     numeric = true,
                     onValueChange = { state.updateManagerVersionCode(it) },
-                )
-                PanelTextField(
-                    value = state.managerVersionName,
-                    label = stringResource(R.string.fake_panel_manager_version_name),
-                    placeholder = stringResource(R.string.fake_panel_manager_version_name_summary),
-                    onValueChange = { state.updateManagerVersionName(it) },
                 )
                 if (state.managerVersionCode.isNotBlank()) {
                     Text(
@@ -146,37 +170,50 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+                PanelTextField(
+                    value = state.managerVersionName,
+                    label = stringResource(R.string.fake_panel_manager_version_name),
+                    placeholder = stringResource(R.string.fake_panel_manager_version_name_summary),
+                    onValueChange = { state.updateManagerVersionName(it) },
+                )
                 Text(
-                    text = stringResource(R.string.fake_panel_lkm),
+                    text = stringResource(R.string.fake_panel_mode),
                     style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 8.dp),
                 )
-                LkmModeRow(
-                    selected = state.workingMode,
-                    onSelect = { state.selectWorkingMode(it) },
-                )
+                Column(modifier = Modifier.selectableGroup()) {
+                    FakeWorkingMode.entries.forEach { mode ->
+                        RadioRow(
+                            selected = state.workingMode == mode,
+                            title = stringResource(mode.labelRes()),
+                            summary = null,
+                            onSelect = { state.selectWorkingMode(mode) },
+                        )
+                    }
+                }
             }
 
-            // -------------------------------------------------- home overrides
-            PanelCard(title = stringResource(R.string.fake_panel_home_overrides)) {
-                Text(
-                    text = stringResource(R.string.fake_panel_override_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Spacer(Modifier.height(8.dp))
+            // ------------------------------------------------ system info
+            SectionCard(
+                title = stringResource(R.string.fake_panel_system_info),
+                section = FakePanelSection.SYSTEM_INFO,
+            ) {
                 PanelTextField(
                     value = state.deviceModel,
                     label = stringResource(R.string.home_device_model),
+                    placeholder = stringResource(R.string.fake_panel_override_hint),
                     onValueChange = { state.updateDeviceModel(it) },
                 )
                 PanelTextField(
                     value = state.kernelVersion,
                     label = stringResource(R.string.home_kernel),
+                    placeholder = stringResource(R.string.fake_panel_override_hint),
                     onValueChange = { state.updateKernelVersion(it) },
                 )
                 PanelTextField(
                     value = state.fingerprint,
                     label = stringResource(R.string.home_fingerprint),
+                    placeholder = stringResource(R.string.fake_panel_override_hint),
                     onValueChange = { state.updateFingerprint(it) },
                 )
                 PanelDropdown(
@@ -193,21 +230,11 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                 )
             }
 
-            // ------------------------------------------------------- app naming
-            PanelCard(title = stringResource(R.string.fake_panel_app_name)) {
-                Text(
-                    text = stringResource(R.string.fake_panel_launcher_label),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                LauncherAlias.entries.forEach { entry ->
-                    RadioRow(
-                        selected = state.launcherAlias == entry,
-                        title = stringResource(entry.labelRes),
-                        summary = null,
-                        onSelect = { state.selectLauncherAlias(entry) },
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
+            // ---------------------------------------------------- naming
+            SectionCard(
+                title = stringResource(R.string.fake_panel_naming),
+                section = FakePanelSection.NAMING,
+            ) {
                 PanelTextField(
                     value = state.brandName,
                     label = stringResource(R.string.fake_panel_brand),
@@ -227,49 +254,37 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                 PanelTextField(
                     value = state.inAppName,
                     label = stringResource(R.string.fake_panel_in_app_name),
+                    placeholder = stringResource(R.string.fake_panel_brand_summary),
                     onValueChange = { state.updateInAppName(it) },
                 )
-            }
-
-            // ------------------------------------------------------ su simulate
-            PanelCard(title = stringResource(R.string.fake_panel_su_mode)) {
-                FakeSuRequestMode.entries.forEach { entry ->
-                    RadioRow(
-                        selected = state.suRequestMode == entry,
-                        title = stringResource(entry.labelRes()),
-                        summary = null,
-                        onSelect = { state.selectSuRequestMode(entry) },
-                    )
+                Text(
+                    text = stringResource(R.string.fake_panel_launcher_label),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Column(modifier = Modifier.selectableGroup()) {
+                    LauncherAlias.entries.forEach { entry ->
+                        RadioRow(
+                            selected = state.launcherAlias == entry,
+                            title = stringResource(entry.labelRes),
+                            summary = null,
+                            onSelect = { state.selectLauncherAlias(entry) },
+                        )
+                    }
                 }
-            }
-
-            // ---------------------------------------------------------- stealth
-            PanelCard(title = stringResource(R.string.fake_panel_stealth)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(
-                        checked = state.stealthMode,
-                        onCheckedChange = { state.updateStealthMode(it) },
-                    )
-                    Text(
-                        text = stringResource(R.string.fake_panel_stealth_summary, state.unlockTaps),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 12.dp),
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
+                SwitchRow(
+                    title = stringResource(R.string.fake_panel_stealth),
+                    summary = stringResource(R.string.fake_panel_stealth_summary, state.unlockTaps),
+                    checked = state.stealthMode,
+                    onCheckedChange = { state.updateStealthMode(it) },
+                )
                 Text(
                     text = stringResource(R.string.fake_panel_tap_count, state.unlockTaps),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 // rememberSliderState(value, steps, valueRange)
-                val sliderState = rememberSliderState(
-                    state.sliderValue,
-                    16,
-                    3f..20f,
-                )
+                val sliderState = rememberSliderState(state.sliderValue, 16, 3f..20f)
                 LaunchedEffect(state.sliderValue) {
-                    // Keep the thumb in sync when the value is changed elsewhere
-                    // (e.g. "reset simulation state").
                     if (sliderState.value != state.sliderValue) {
                         sliderState.value = state.sliderValue
                     }
@@ -280,8 +295,12 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                 )
             }
 
-            // ------------------------------------------------------- danger zone
-            PanelCard(title = stringResource(R.string.fake_panel_danger)) {
+            // ------------------------------------------------- danger zone
+            SectionCard(
+                title = stringResource(R.string.fake_panel_danger),
+                section = FakePanelSection.DANGER,
+                danger = true,
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { state.resetToDefaults() }) {
                         Text(stringResource(R.string.fake_panel_reset))
@@ -314,7 +333,7 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        me.weishu.kernelsu.fake.FakeState.uninstallPermanent()
+                        FakeState.uninstallPermanent()
                         state.showWipeDialog = false
                     },
                 ) {
@@ -330,17 +349,111 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
     }
 }
 
+/** "installed / mode / version" at a glance, no scrolling needed. */
 @Composable
-private fun PanelCard(title: String, content: @Composable () -> Unit) {
+private fun StatusOverview(state: FakePanelState) {
+    val installed = when (state.stateOverride) {
+        FakeInstallState.AUTO -> FakeState.installed
+        FakeInstallState.INSTALLED -> true
+        else -> false
+    }
+    val scheme = MaterialTheme.colorScheme
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatusTag(
+            label = stringResource(
+                if (installed) R.string.fake_panel_state_installed
+                else R.string.fake_panel_state_not_installed
+            ),
+            backgroundColor = if (installed) scheme.secondaryContainer else scheme.errorContainer,
+            contentColor = if (installed) scheme.onSecondaryContainer else scheme.onErrorContainer,
+        )
+        StatusTag(
+            label = stringResource(state.workingMode.labelRes()),
+            backgroundColor = scheme.tertiaryContainer,
+            contentColor = scheme.onTertiaryContainer,
+        )
+        StatusTag(
+            label = if (installed) "v${state.ksuVersion}" else "—",
+            backgroundColor = scheme.surfaceVariant,
+            contentColor = scheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(
+    title: String,
+    section: FakePanelSection,
+    danger: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    var expanded by rememberSaveable(section.name) { mutableStateOf(section.defaultExpanded) }
+
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (danger) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                )
+            }
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically(),
+            ) {
+                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SwitchRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
-            content()
         }
     }
 }
@@ -359,7 +472,7 @@ private fun PanelTextField(
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
         singleLine = true,
-        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+        keyboardOptions = KeyboardOptions(
             keyboardType = if (numeric) KeyboardType.Number else KeyboardType.Text,
         ),
         modifier = Modifier
@@ -374,39 +487,49 @@ private fun PanelDropdown(
     value: String,
     options: List<String>,
     onSelect: (Int) -> Unit,
+    summary: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(label) },
+                trailingIcon = {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+            )
+            // Transparent overlay so tapping anywhere on the field opens the list.
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { expanded = true }
+            )
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEachIndexed { index, option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            onSelect(index)
+                            expanded = false
+                        },
+                    )
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        )
-        // Transparent overlay so tapping anywhere on the field opens the list.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable { expanded = true }
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEachIndexed { index, option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onSelect(index)
-                        expanded = false
-                    },
-                )
             }
+        }
+        if (summary != null) {
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -438,18 +561,17 @@ private fun RadioRow(
     }
 }
 
-@Composable
-private fun LkmModeRow(selected: FakeWorkingMode, onSelect: (FakeWorkingMode) -> Unit) {
-    Column(modifier = Modifier.selectableGroup()) {
-        FakeWorkingMode.entries.forEach { mode ->
-            RadioRow(
-                selected = selected == mode,
-                title = stringResource(mode.labelRes()),
-                summary = null,
-                onSelect = { onSelect(mode) },
-            )
-        }
-    }
+/** The three `ksud feature check` results the lab can pretend to be. */
+internal val FEATURE_STATUS_VALUES = listOf(
+    FakeState.FEATURE_STATUS_SUPPORTED,
+    FakeState.FEATURE_STATUS_MANAGED,
+    FakeState.FEATURE_STATUS_UNSUPPORTED,
+)
+
+internal fun featureStatusLabelRes(value: String): Int = when (value) {
+    FakeState.FEATURE_STATUS_MANAGED -> R.string.fake_feature_status_managed
+    FakeState.FEATURE_STATUS_UNSUPPORTED -> R.string.fake_feature_status_unsupported
+    else -> R.string.fake_feature_status_supported
 }
 
 internal fun FakeInstallState.labelRes(): Int = when (this) {
