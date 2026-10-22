@@ -112,9 +112,24 @@ android {
         resValue("string", "app_name", managerName)
     }
 
+    // The fake data layer is unit tested on the JVM. android.util.Log is the
+    // only Android API it touches; without this flag the mockable android.jar
+    // throws "not mocked" instead of returning a default.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     lint {
         abortOnError = true
         checkReleaseBuilds = false
+        // 325 of the errors lint reports are MissingTranslation on upstream's
+        // own res/values*/strings.xml: tiann/KernelSU simply does not translate
+        // every string into all 45 languages, and the fork must keep those
+        // files byte-identical to upstream. Demoting the check keeps it visible
+        // in the report without turning a known upstream gap into a red build.
+        // The fork's own strings are covered by tools/verify-divergence.ps1
+        // rule 6, which is stricter (it also compares %1$s placeholders).
+        warning += "MissingTranslation"
     }
 
     compileOptions {
