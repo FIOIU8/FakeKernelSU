@@ -64,7 +64,7 @@ import me.weishu.kernelsu.fake.LauncherAlias
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
-import me.weishu.kernelsu.ui.util.fakeStr
+import me.weishu.kernelsu.ui.fake.fakeStr
 
 /**
  * Material 3 flavour of the FakeKernelSU lab.

@@ -39,8 +39,8 @@ import me.weishu.kernelsu.ui.component.material.TopBarBackButton
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
-import me.weishu.kernelsu.ui.util.fakeAppName
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
+import me.weishu.kernelsu.ui.fake.fakeAppName
+import me.weishu.kernelsu.ui.fake.rememberFakeUnlockModifier
 
 @Composable
 fun AboutScreenMaterial(

@@ -1,4 +1,4 @@
-package me.weishu.kernelsu.ui.screen.superuser
+package me.weishu.kernelsu.ui.screen.fakepanel
 
 import android.content.Context
 import android.widget.Toast
@@ -40,14 +40,15 @@ import kotlinx.coroutines.launch
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.AppInfo
-import me.weishu.kernelsu.data.repository.AppCatalog
+import me.weishu.kernelsu.fake.repository.AppCatalog
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.fake.FakeSu
 import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.AppIconImage
-import me.weishu.kernelsu.ui.util.fakeStr
+import me.weishu.kernelsu.ui.screen.superuser.SuperUserUiState
+import me.weishu.kernelsu.ui.fake.fakeStr
 import kotlin.random.Random
 
 /**

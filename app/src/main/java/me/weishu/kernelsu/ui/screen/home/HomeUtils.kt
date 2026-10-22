@@ -22,7 +22,7 @@ data class SystemInfo(
 )
 
 /** The value [FakeState.ksuVersion] ships with, i.e. "never touched by the user". */
-const val DEFAULT_KSU_VERSION = 13000
+const val DEFAULT_KSU_VERSION = FakeState.DEFAULT_KSU_VERSION
 
 /**
  * Manager version used for display and for the update check.

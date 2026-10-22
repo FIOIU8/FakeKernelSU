@@ -1,4 +1,4 @@
-package me.weishu.kernelsu.ui.util
+package me.weishu.kernelsu.ui.fake
 
 import android.content.ComponentName
 import android.content.pm.PackageManager

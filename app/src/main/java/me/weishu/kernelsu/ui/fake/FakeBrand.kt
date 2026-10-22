@@ -1,4 +1,4 @@
-package me.weishu.kernelsu.ui.util
+package me.weishu.kernelsu.ui.fake
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable

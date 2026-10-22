@@ -74,8 +74,8 @@ import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopup
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
-import me.weishu.kernelsu.ui.util.fakeAppName
-import me.weishu.kernelsu.ui.util.rememberFakeUnlockModifier
+import me.weishu.kernelsu.ui.fake.fakeAppName
+import me.weishu.kernelsu.ui.fake.rememberFakeUnlockModifier
 
 @Composable
 fun HomePagerMaterial(

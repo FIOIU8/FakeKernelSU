@@ -13,7 +13,7 @@ import me.weishu.kernelsu.fake.FakeSuRequestMode
 import me.weishu.kernelsu.fake.LauncherAlias
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
-import me.weishu.kernelsu.ui.util.applyLauncherAlias
+import me.weishu.kernelsu.ui.fake.applyLauncherAlias
 
 /**
  * The lab's mutually exclusive "how root is provided" selector. It is a UI

@@ -74,6 +74,7 @@ import me.weishu.kernelsu.ui.component.material.SegmentedItem
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.util.ownerNameForUid
+import me.weishu.kernelsu.ui.screen.fakepanel.rememberFakeSuRequestController
 import me.weishu.kernelsu.ui.viewmodel.AppSortType
 
 @Composable

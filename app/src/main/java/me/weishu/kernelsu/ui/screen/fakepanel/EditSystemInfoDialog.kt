@@ -1,4 +1,4 @@
-package me.weishu.kernelsu.ui.screen.home
+package me.weishu.kernelsu.ui.screen.fakepanel
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +31,7 @@ import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.miuix.EditText
+import me.weishu.kernelsu.ui.screen.home.SystemInfoField
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
@@ -67,7 +68,7 @@ fun EditSystemInfoDialog(
         UiMode.Miuix -> OverlayDialog(
             show = true,
             title = title,
-            summary = stringResource(R.string.home_edit_summary),
+            summary = stringResource(R.string.fake_home_edit_summary),
             onDismissRequest = onDismiss,
             content = {
                 if (isEnum) {
@@ -80,7 +81,7 @@ fun EditSystemInfoDialog(
                             onValueChange = { text = it },
                         )
                         Text(
-                            text = stringResource(R.string.home_edit_hint),
+                            text = stringResource(R.string.fake_home_edit_hint),
                             fontSize = 13.sp,
                             color = colorScheme.onSurfaceVariantSummary,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -135,7 +136,7 @@ fun EditSystemInfoDialog(
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Text(
-                            text = stringResource(R.string.home_edit_hint),
+                            text = stringResource(R.string.fake_home_edit_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp),
@@ -203,20 +204,9 @@ private fun SystemInfoField.labelRes(): Int = when (this) {
     SystemInfoField.SECCOMP -> R.string.home_seccomp_status
 }
 
-private fun FakeSelinuxMode.labelRes(): Int = when (this) {
-    FakeSelinuxMode.SYSTEM -> R.string.fake_follow_system
-    FakeSelinuxMode.ENFORCING -> R.string.selinux_status_enforcing
-    FakeSelinuxMode.PERMISSIVE -> R.string.selinux_status_permissive
-    FakeSelinuxMode.DISABLED -> R.string.selinux_status_disabled
-}
-
-private fun FakeSeccompMode.labelRes(): Int = when (this) {
-    FakeSeccompMode.SYSTEM -> R.string.fake_follow_system
-    FakeSeccompMode.NOT_SUPPORTED -> R.string.seccomp_status_not_supported
-    FakeSeccompMode.DISABLED -> R.string.seccomp_status_disabled
-    FakeSeccompMode.STRICT -> R.string.seccomp_status_strict
-    FakeSeccompMode.FILTER -> R.string.seccomp_status_filter
-}
+// FakeSelinuxMode.labelRes() / FakeSeccompMode.labelRes() live in
+// FakeControlPanelMaterial.kt - both files are in the same package, so
+// defining them twice would be a conflicting-overload error.
 
 /**
  * Writes the edit into [FakeState]. `null` (or an empty string for text fields)
