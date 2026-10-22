@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.fake.FakeModules
 import me.weishu.kernelsu.fake.FakeState
-import me.weishu.kernelsu.ui.util.syncLauncherAlias
+import me.weishu.kernelsu.ui.fake.syncLauncherAlias
 import me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -44,6 +44,20 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
         super.onCreate()
         ksuApp = this
 
+        // The HTTP client is set up before the "user locked" early return:
+        // the app is directBootAware, so the process can start before the
+        // user unlocks. Leaving `okhttpClient` uninitialized in that case
+        // turned every later use into an UninitializedPropertyAccessException.
+        okhttpClient =
+            OkHttpClient.Builder().cache(Cache(File(cacheDir, "okhttp"), 10 * 1024 * 1024))
+                .addInterceptor { block ->
+                    block.proceed(
+                        block.request().newBuilder()
+                            .header("User-Agent", "KernelSU/${BuildConfig.VERSION_CODE}")
+                            .header("Accept-Language", Locale.getDefault().toLanguageTag()).build()
+                    )
+                }.build()
+
         if (!isUserUnlocked()) {
             return
         }
@@ -73,16 +87,6 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
 
         // Provide working env for rust's temp_dir()
         Os.setenv("TMPDIR", cacheDir.absolutePath, true)
-
-        okhttpClient =
-            OkHttpClient.Builder().cache(Cache(File(cacheDir, "okhttp"), 10 * 1024 * 1024))
-                .addInterceptor { block ->
-                    block.proceed(
-                        block.request().newBuilder()
-                            .header("User-Agent", "KernelSU/${BuildConfig.VERSION_CODE}")
-                            .header("Accept-Language", Locale.getDefault().toLanguageTag()).build()
-                    )
-                }.build()
     }
 
     override val viewModelStore: ViewModelStore

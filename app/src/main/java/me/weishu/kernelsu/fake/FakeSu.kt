@@ -22,6 +22,12 @@ object FakeSu {
 
     private val DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
+    /** Guards the log file and the sequence numbers. */
+    private val lock = Any()
+
+    /** Per-file line counter, so appending does not re-read the whole file. */
+    private val sequence = SuLogSequence()
+
     private fun sulogDir(): File = File(FakeState.ksuDir, "log")
 
     private fun todaySulogFile(): File {
@@ -30,25 +36,31 @@ object FakeSu {
         return File(dir, "sulog-${LocalDate.now().format(DATE_FORMAT)}.log")
     }
 
-    private fun nextSeq(file: File): Int {
-        if (!file.exists()) return 1
-        return runCatching {
-            file.readLines().count { it.isNotBlank() } + 1
-        }.getOrDefault(1)
-    }
+    /**
+     * The next sequence number for [file].
+     *
+     * The counting itself lives in [SuLogSequence] so it can be tested on the
+     * JVM; the caller must hold [lock] from "get a number" to "write the line"
+     * so two requests can never share one number.
+     */
+    private fun nextSeq(file: File): Int = sequence.next(file)
 
     private fun appendLine(type: String, extra: Map<String, String>) {
         runCatching {
             val file = todaySulogFile()
-            val seq = nextSeq(file)
-            val fields = buildMap {
-                put("ts_ns", SystemClock.elapsedRealtimeNanos().toString())
-                put("type", type)
-                put("seq", seq.toString())
-                putAll(extra)
+            // One lock for the whole append: the sequence number and the line
+            // itself must not be interleaved with another writer.
+            synchronized(lock) {
+                val seq = nextSeq(file)
+                val fields = buildMap {
+                    put("ts_ns", SystemClock.elapsedRealtimeNanos().toString())
+                    put("type", type)
+                    put("seq", seq.toString())
+                    putAll(extra)
+                }
+                val line = fields.entries.joinToString(" ") { "${it.key}=${it.value}" }
+                file.appendText(line + "\n")
             }
-            val line = fields.entries.joinToString(" ") { "${it.key}=${it.value}" }
-            file.appendText(line + "\n")
         }.onFailure { Log.w(TAG, "failed to append sulog line", it) }
     }
 
@@ -108,5 +120,16 @@ object FakeSu {
     fun grant(packageName: String, uid: Int) {
         val profile = Natives.getAppProfile(packageName, uid)
         Natives.setAppProfile(profile.copy(allowSu = true, currentUid = uid))
+    }
+
+    /**
+     * Drops the in-memory counters.
+     *
+     * Called when the demo data is wiped: the log files are deleted as part of
+     * [FakeState.adbRoot], and a fresh log must start at `seq=1` again instead
+     * of continuing from the last session's number.
+     */
+    fun clear() {
+        synchronized(lock) { sequence.reset() }
     }
 }

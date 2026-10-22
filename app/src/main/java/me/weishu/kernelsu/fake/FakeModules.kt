@@ -21,9 +21,16 @@ object FakeModules {
 
     private const val TAG = "FakeModules"
 
-    private val MODULE_ID_REGEX = Regex("^[a-zA-Z][a-zA-Z0-9._-]+$")
+    /**
+     * Limits for the extraction, and the module id rule, live in [ModuleZip]
+     * so they can be unit tested without an Android runtime.
+     */
+    private val LIMITS = ModuleZip.Limits()
 
     fun moduleDir(id: String): File? {
+        // The id ends up in a path, so it must never be able to escape the
+        // module directory.
+        if (!ModuleZip.isValidId(id)) return null
         val dir = File(FakeState.modulesDir, id)
         return if (dir.isDirectory) dir else null
     }
@@ -40,7 +47,6 @@ object FakeModules {
     }
 
     fun listJson(): String {
-        purgePendingRemoval()
         val root = FakeState.modulesDir
         val array = JSONArray()
         if (root.isDirectory) {
@@ -48,6 +54,12 @@ object FakeModules {
                 if (!dir.isDirectory) return@forEach
                 val prop = readProp(dir) ?: return@forEach
                 val id = prop.optString("id").ifEmpty { dir.name }
+                // A module.prop that was tampered with must not be able to
+                // point the rest of the app outside the module directory.
+                if (!ModuleZip.isValidId(id)) {
+                    Log.w(TAG, "skipping module with invalid id: $id")
+                    return@forEach
+                }
                 array.put(
                     JSONObject().apply {
                         put("id", id)
@@ -114,28 +126,23 @@ object FakeModules {
                 val propText = archive.getInputStream(propEntry).bufferedReader().readText()
                 val prop = parseProp(propText)
                 val id = prop.optString("id")
-                if (id.isEmpty() || !MODULE_ID_REGEX.matches(id)) {
+                if (!ModuleZip.isValidId(id)) {
                     return FlashResult(1, "Invalid module id: '$id'", false)
                 }
                 onStdout("- Module id: $id")
                 onStdout("- Extracting to ${FakeState.modulesDir.absolutePath}/$id")
-                val dir = File(FakeState.modulesDir, id)
-                dir.mkdirs()
-                val entries = archive.entries()
-                while (entries.hasMoreElements()) {
-                    val entry = entries.nextElement()
-                    if (entry.isDirectory) continue
-                    val name = entry.name
-                    if (name.contains("..")) continue
-                    val target = File(dir, name)
-                    target.parentFile?.mkdirs()
-                    archive.getInputStream(entry).use { inStream ->
-                        target.outputStream().use { out -> inStream.copyTo(out) }
-                    }
-                    if (entry.name == "module.prop") onStdout("- Wrote module.prop")
+
+                // Everything is validated before the first byte is written, so
+                // a rejected zip does not leave a half-extracted module behind.
+                val target = File(FakeState.modulesDir, id)
+                val extracted = ModuleZip.extract(archive, target, LIMITS, onStdout, onStderr)
+                if (extracted is ModuleZip.Result.Rejected) {
+                    runCatching { target.deleteRecursively() }
+                    return FlashResult(1, extracted.reason, false)
                 }
+
                 // keep the original zip for reference / re-install
-                cache.copyTo(File(dir, "module.zip"), overwrite = true)
+                cache.copyTo(File(target, "module.zip"), overwrite = true)
                 onStdout("- Module installed")
             }
             return FlashResult(0, "", false)
@@ -194,15 +201,10 @@ object FakeModules {
         return runCatching { parseProp(file.readText()) }.getOrNull()
     }
 
+    /** `module.prop` as the JSON the module list speaks; parsing lives in [ModuleZip]. */
     private fun parseProp(text: String): JSONObject {
         val obj = JSONObject()
-        text.lineSequence().forEach { raw ->
-            val line = raw.trim()
-            if (line.isEmpty() || line.startsWith("#")) return@forEach
-            val idx = line.indexOf('=')
-            if (idx <= 0) return@forEach
-            obj.put(line.substring(0, idx).trim(), line.substring(idx + 1).trim())
-        }
+        ModuleZip.parseProp(text).forEach { (key, value) -> obj.put(key, value) }
         return obj
     }
 }

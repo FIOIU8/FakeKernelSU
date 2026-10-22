@@ -43,6 +43,12 @@ object Natives {
     const val ROOT_UID = 0
     const val ROOT_GID = 0
 
+    /** Android encodes a uid as `userId * PER_USER_RANGE + appId`. */
+    private const val PER_USER_RANGE = 100000
+
+    /** App ids below this one are system apps, not installed packages. */
+    private const val FIRST_APPLICATION_UID = 10000
+
     /** Effective display state, honoring the control-panel override. */
     val effectiveState: FakeInstallState
         get() = when (FakeState.stateOverride) {
@@ -142,10 +148,21 @@ object Natives {
     }
 
     /**
-     * Get the user name for the uid.
+     * The Android user name of [uid].
+     *
+     * Android encodes a uid as `userId * 100000 + appId`, and the app id
+     * itself is `10000 + appId` for a normal app. The old implementation
+     * always assumed user 0, so uid 0 came out as "u0_a0" instead of "root".
      */
     fun getUserName(uid: Int): String? {
-        return "u0_a${(uid - 10000).coerceAtLeast(0)}"
+        if (uid < 0) return null
+        val userId = uid / PER_USER_RANGE
+        val appId = uid % PER_USER_RANGE
+        return if (appId < FIRST_APPLICATION_UID) {
+            "u${userId}_system${appId}"
+        } else {
+            "u${userId}_a${appId - FIRST_APPLICATION_UID}"
+        }
     }
 
     fun getSuperuserCount(): Int {
@@ -212,7 +229,9 @@ object Natives {
 
         val nonRootUseDefault: Boolean = true,
         val umountModules: Boolean = true,
-        var rules: String = "", // this field is save in ksud!!
+        // The sepolicy rules of this profile. Upstream stores them in ksud;
+        // the demo keeps them in the local profile document.
+        var rules: String = "",
         val flags: Long = FLAG_KSU_NO_NEW_PRIVS,
     ) : Parcelable {
         @Keep

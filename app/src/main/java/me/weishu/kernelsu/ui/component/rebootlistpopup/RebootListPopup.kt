@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.fake.FakeModules
 import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
@@ -54,6 +55,9 @@ fun rememberRebootAction(): (String) -> Unit {
     val doReboot: (String) -> Unit = { reason ->
         val wasJailbreak = FakeState.jailbreakMode
         reboot(reason)
+        // Upstream applies the staged module removals on the next boot; the
+        // demo has no boot, so the simulated reboot does it.
+        FakeModules.purgePendingRemoval()
         if (wasJailbreak) {
             FakeState.clearJailbreak()
             Toast.makeText(context, rebootedMessage, Toast.LENGTH_LONG).show()

@@ -12,7 +12,11 @@ import java.time.format.DateTimeFormatter
 import java.util.ArrayDeque
 import java.util.Locale
 
-private val SULOG_DIR: String = File(FakeState.ksuDir, "log").absolutePath
+// Resolved on every use instead of once at class-init time: the path
+// depends on the Application, which may not be ready when this file's
+// top-level properties are initialized.
+private val SULOG_DIR: String
+    get() = File(FakeState.ksuDir, "log").absolutePath
 private const val SULOG_LINE_LIMIT = 1000
 private const val SULOG_FILE_PREFIX = "sulog-"
 private const val SULOG_FILE_SUFFIX = ".log"

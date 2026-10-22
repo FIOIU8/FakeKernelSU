@@ -8,6 +8,7 @@ import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.model.AppInfo
 import me.weishu.kernelsu.data.model.WEBVIEW_ZYGOTE_PROFILE_KEY
 import me.weishu.kernelsu.data.model.WEBVIEW_ZYGOTE_UID
+import me.weishu.kernelsu.fake.repository.AppCatalog
 import me.weishu.kernelsu.ksuApp
 
 /**

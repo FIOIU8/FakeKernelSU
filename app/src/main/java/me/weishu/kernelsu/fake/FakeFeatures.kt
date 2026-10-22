@@ -14,35 +14,43 @@ import java.io.File
 object FakeFeatures {
     private const val FILE_NAME = "features.json"
 
-    private fun file(): File {
-        FakeState.ensureDirs()
-        return File(FakeState.ksuDir, FILE_NAME)
-    }
+    private val store = JsonStore<JSONObject>(
+        fileProvider = { File(FakeState.ksuDir, FILE_NAME) },
+        decode = { text -> JSONObject(text) },
+        encode = { features -> features.toString() },
+        empty = { JSONObject() },
+    )
 
-    fun read(): JSONObject {
-        val f = file()
-        if (!f.exists()) return JSONObject()
-        return runCatching { JSONObject(f.readText()) }.getOrDefault(JSONObject())
-    }
+    fun read(): JSONObject = store.read()
 
     fun write(features: JSONObject) {
-        runCatching { file().writeText(features.toString()) }
+        store.write(features)
     }
 
     /** Current value of [name], falling back to the per-feature default. */
-    fun get(name: String): Long = read().optLong(name, defaultValue(name))
+    fun get(name: String): Long = store.read().optLong(name, defaultValue(name))
 
     /** Persist a single feature value. Returns false when the write failed. */
     fun set(name: String, value: Long): Boolean = runCatching {
-        val features = read()
-        features.put(name, value)
-        write(features)
+        store.update { features ->
+            // Work on a copy: the cached document must not change before the
+            // write actually succeeded.
+            val next = JSONObject(features.toString())
+            next.put(name, value)
+            next
+        }
     }.isSuccess
 
     /** Register a boolean feature as `0` / `1`. */
     fun setEnabled(name: String, enabled: Boolean): Boolean = set(name, if (enabled) 1L else 0L)
 
     fun isEnabled(name: String): Boolean = get(name) == 1L
+
+    /** Drops the document and the cached copy. */
+    fun clear() {
+        runCatching { File(FakeState.ksuDir, FILE_NAME).delete() }
+        store.invalidate()
+    }
 
     /** Same defaults upstream ships with. */
     fun defaultValue(feature: String): Long = when (feature) {

@@ -53,7 +53,13 @@ internal suspend fun isDownloadAvailable(uri: Uri): Boolean = withContext(Dispat
 
 fun checkNewVersion(): LatestVersionInfo {
     if (!isNetworkAvailable(ksuApp)) return LatestVersionInfo()
-    val url = "https://api.github.com/repos/tiann/KernelSU/releases/latest"
+    // FakeKernelSU checks its own releases. Upstream points at
+    // tiann/KernelSU, which would offer the official manager - a different
+    // applicationId, so it could never be installed over this build - and
+    // whose versionCode (same 30000+commit-count scheme, far longer history)
+    // would always be higher, so the "new version available" card would
+    // never go away.
+    val url = "https://api.github.com/repos/FIOIU8/FakeKernelSU/releases/latest"
     // default null value if failed
     val defaultValue = LatestVersionInfo()
     runCatching {

@@ -1,4 +1,4 @@
-package me.weishu.kernelsu.data.repository
+package me.weishu.kernelsu.fake.repository
 
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager

@@ -11,42 +11,40 @@ import java.io.File
  * Upstream keeps profiles inside the kernel module and only persists the
  * "rules" string via ksud; the fake manager keeps everything in
  * filesDir/adb/ksu/profiles.json.
+ *
+ * The document is read once and cached: the superuser list asks for a profile
+ * per installed app, and re-reading and re-parsing the file for every single
+ * app turned the list into hundreds of disk reads.
  */
 object FakeProfiles {
 
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
 
-    private val lock = Any()
+    private val store = JsonStore<Map<String, Natives.Profile>>(
+        fileProvider = { FakeState.profilesFile },
+        decode = { text -> json.decodeFromString<Map<String, Natives.Profile>>(text) },
+        encode = { map -> json.encodeToString(map) },
+        empty = { emptyMap() },
+    )
 
-    private fun readAll(): MutableMap<String, Natives.Profile> = synchronized(lock) {
-        if (!FakeState.profilesFile.exists()) return mutableMapOf()
-        runCatching {
-            json.decodeFromString<Map<String, Natives.Profile>>(FakeState.profilesFile.readText())
-                .toMutableMap()
-        }.getOrDefault(mutableMapOf())
-    }
+    fun get(key: String, uid: Int): Natives.Profile =
+        store.read()[key] ?: Natives.Profile(name = key, currentUid = uid)
 
-    private fun writeAll(map: Map<String, Natives.Profile>) = synchronized(lock) {
-        runCatching {
-            FakeState.ensureDirs()
-            FakeState.profilesFile.writeText(json.encodeToString(map))
+    fun set(profile: Natives.Profile) {
+        store.update { map ->
+            val next = LinkedHashMap(map)
+            next[profile.name] = profile
+            next
         }
     }
 
-    fun get(key: String, uid: Int): Natives.Profile =
-        readAll()[key] ?: Natives.Profile(name = key, currentUid = uid)
+    fun all(): Map<String, Natives.Profile> = store.read()
 
-    fun set(profile: Natives.Profile) {
-        val map = readAll()
-        map[profile.name] = profile
-        writeAll(map)
-    }
+    fun grantedCount(): Int = store.read().values.count { it.allowSu }
 
-    fun all(): Map<String, Natives.Profile> = readAll()
-
-    fun grantedCount(): Int = readAll().values.count { it.allowSu }
-
+    /** Drops the document and the cached copy. */
     fun clear() {
         runCatching { FakeState.profilesFile.delete() }
+        store.invalidate()
     }
 }
