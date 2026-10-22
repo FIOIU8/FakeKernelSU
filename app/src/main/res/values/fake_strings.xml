@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FakeKernelSU: launcher alias labels -->
+    <string name="fake_launcher_label_fake">FakeKernelSU</string>
+    <string name="fake_launcher_label_ksu">KernelSU</string>
+    <string name="fake_launcher_label_manager">KSU Manager</string>
+    <string name="fake_launcher_label_short">KSU</string>
+
+    <!-- FakeKernelSU: install screen -->
+    <string name="fake_install_title">Install</string>
+    <string name="fake_unsupported_action">This action needs a real kernel and is disabled in FakeKernelSU</string>
+    <string name="fake_install_desc">FakeKernelSU is a simulation build for demonstration only. No kernel is modified and no real root access is granted. "Direct install" only sets a marker inside the app so the manager shows a working state.</string>
+    <string name="fake_install_direct_summary">Direct install (recommended) — patches the simulated boot image inside the app</string>
+
+    <!-- FakeKernelSU: settings entry -->
+    <string name="fake_settings_entry">FakeKernelSU Lab</string>
+    <string name="fake_settings_entry_summary">Simulation control panel: install state, version, home info and more</string>
+
+    <!-- FakeKernelSU: about unlock -->
+    <string name="fake_about_tap_hint">%1$d more taps to open the lab</string>
+
+    <!-- FakeKernelSU: control panel -->
+    <string name="fake_panel_title">FakeKernelSU Lab</string>
+    <string name="fake_panel_state">Install state</string>
+    <string name="fake_panel_state_auto">Follow actual state</string>
+    <string name="fake_panel_state_auto_summary">Show "installed" only after an install has been performed</string>
+    <string name="fake_panel_state_installed">Installed</string>
+    <string name="fake_panel_state_installed_summary">Manager version detected, showing as working</string>
+    <string name="fake_panel_state_not_installed">Not installed</string>
+    <string name="fake_panel_state_not_installed_summary">Show the not-installed page with an install entry</string>
+    <string name="fake_panel_state_unsupported">Unsupported</string>
+    <string name="fake_panel_state_unsupported_summary">Kernel unsupported, only basic features available</string>
+    <string name="fake_panel_root">Root granted</string>
+    <string name="fake_panel_root_summary">When off, the manager shows "root access failed" while still reporting as installed (mixed state)</string>
+    <string name="fake_panel_lkm_update">Bundled LKM update</string>
+    <string name="fake_panel_lkm_update_summary">Show the "a newer bundled LKM is available" banner on the home page (LKM mode only)</string>
+    <string name="fake_panel_version">Manager version</string>
+    <string name="fake_panel_version_hint">Version code, e.g. 13000</string>
+    <string name="fake_panel_lkm">LKM mode</string>
+    <string name="fake_panel_lkm_gki">GKI</string>
+    <string name="fake_panel_lkm_lkm">LKM</string>
+    <string name="fake_panel_lkm_none">None</string>
+    <string name="fake_panel_home_overrides">Home info overrides</string>
+    <string name="fake_panel_override_hint">Leave empty to show the real device value</string>
+    <string name="fake_panel_app_name">App name</string>
+    <string name="fake_panel_launcher_label">Launcher label</string>
+    <string name="fake_panel_in_app_name">In-app name</string>
+    <string name="fake_panel_su_mode">Simulated su request</string>
+    <string name="fake_panel_su_pick">Pick an app</string>
+    <string name="fake_panel_su_random">Random app</string>
+    <string name="fake_panel_stealth">Hide entry</string>
+    <string name="fake_panel_stealth_summary">Remove the lab entry from Settings</string>
+    <string name="fake_panel_hide_entry_message">The lab entry will disappear from Settings. The lab itself is not removed — long-press the title on the home page to open it again.</string>
+    <string name="fake_panel_long_press_hint">To reopen the lab: long-press the title on the home page.</string>
+    <string name="fake_panel_danger">Danger zone</string>
+    <string name="fake_panel_reset">Reset simulation state</string>
+    <string name="fake_panel_wipe">Wipe all data</string>
+    <string name="fake_panel_wipe_confirm">This erases all simulation data, profiles and logs, and resets every option. Continue?</string>
+    <string name="fake_panel_disclaimer">This app is a simulation demo. It never modifies your kernel and grants no real root access. All data is stored only inside the app\'s private directory.</string>
+
+    <!-- FakeKernelSU: simulated su request -->
+    <string name="fake_su_trigger">Simulate su request</string>
+    <string name="fake_su_trigger_summary">Pop a realistic root request dialog and record it in the su log</string>
+    <string name="fake_su_not_installed">FakeKernelSU is not installed — install it first</string>
+    <string name="fake_su_no_apps">No app available to send a request</string>
+    <string name="fake_su_pick_title">Pick an app</string>
+    <string name="fake_su_request_title">Root request</string>
+    <string name="fake_su_request_message">Allow %1$s to get root privileges?</string>
+    <string name="fake_su_remember">Remember my choice</string>
+    <string name="fake_su_allow">Allow</string>
+    <string name="fake_su_deny">Deny</string>
+    <string name="fake_su_granted_toast">Root granted to %1$s</string>
+    <string name="fake_su_denied_toast">Denied %1$s</string>
+
+    <!-- FakeKernelSU: version & system info overrides -->
+    <string name="fake_panel_ksu_version">KSU version</string>
+    <string name="fake_panel_ksu_version_summary">Shown as the working version</string>
+    <string name="fake_panel_manager_version_code">Manager version code</string>
+    <string name="fake_panel_manager_version_code_summary">Used by the update check; empty = real</string>
+    <string name="fake_panel_manager_version_name">Manager version name</string>
+    <string name="fake_panel_manager_version_name_summary">Shown on the home page; empty = real</string>
+    <string name="fake_panel_compare_value">Comparing against %1$d</string>
+    <string name="fake_panel_selinux_mode">SELinux mode</string>
+    <string name="fake_panel_seccomp_status">Seccomp status</string>
+    <string name="fake_follow_system">Follow system</string>
+
+    <!-- FakeKernelSU: jailbreak mode -->
+    <string name="fake_jailbreak_confirm">Enter jailbreak mode?\n\nRoot access is acquired at runtime (late-load). A reboot clears it, and the device has to be jailbroken again.</string>
+    <string name="fake_jailbreak_enabled">Jailbreak mode is now active</string>
+    <string name="fake_jailbreak_rebooted">Jailbreak mode has been exited</string>
+
+    <!-- FakeKernelSU: brand name -->
+    <string name="fake_panel_brand">Brand name</string>
+    <string name="fake_panel_brand_summary">Used inside the app; empty = app name</string>
+    <string name="fake_panel_brand_in_use">Brand shown as %1$s</string>
+
+    <!-- FakeKernelSU: long-press home info editing -->
+    <string name="fake_home_edit_summary">Long press a row to change what the home page shows</string>
+    <string name="fake_home_edit_hint">Leave empty to use the real device value</string>
+    <string name="fake_edit_save">Save</string>
+    <string name="fake_edit_reset">Use real value</string>
+
+    <!-- FakeKernelSU: lab sections -->
+    <string name="fake_panel_runtime">Runtime</string>
+    <string name="fake_panel_version_mode">Version &amp; mode</string>
+    <string name="fake_panel_system_info">System info</string>
+    <string name="fake_panel_naming">Name &amp; disguise</string>
+    <string name="fake_panel_mode">Mode</string>
+    <string name="fake_panel_feature_status">Feature status</string>
+    <string name="fake_panel_feature_status_summary">Simulate the greyed-out state</string>
+    <string name="fake_feature_status_supported">Supported</string>
+    <string name="fake_feature_status_managed">Managed</string>
+    <string name="fake_feature_status_unsupported">Unsupported</string>
+</resources>

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string name="module_preinit_no_space">preinit saltato: spazio insufficiente su /metadata</string>
+
+    <string name="module_preinit_error">preinit saltato: directory preinit non valida</string>
+
+    <string name="module_preinit_bootloop">preinit disabilitato dopo ripetuti errori di avvio</string>
+
+    <string name="module_preinit_unsupported">preinit saltato: non supportato dal kernel attuale</string>
+
+    <string name="script_run">Esegui</string>
+
+    <string name="script_run_title">Esegui script</string>
+
+    <string name="script_preparing">Verifica ed estrazione…</string>
+
+    <string name="script_error_title">Impossibile eseguire questo script</string>
+
+    <string name="script_error_unverified">Non è stato possibile verificare questo download. Scaricalo di nuovo.</string>
+
+    <string name="script_error_verify_failed">Dimensioni o SHA-256 non corrispondenti. Il file è stato eliminato, scaricalo di nuovo.</string>
+
+    <string name="script_error_not_oneshot">Questo ZIP non è uno script one-shot (module.prop non dichiara oneshot=true).</string>
+
+    <string name="script_error_id_mismatch">L\'id in module.prop non corrisponde a questa voce del registro.</string>
+
+    <string name="script_error_invalid_id">module.prop ha un id mancante o non valido.</string>
+
+    <string name="script_error_missing_prop">module.prop è mancante.</string>
+
+    <string name="script_error_missing_action">action.sh è mancante.</string>
+
+    <string name="script_error_unsafe">Lo ZIP contiene voci non sicure (percorsi assoluti, \"..\", symlink o file speciali).</string>
+
+    <string name="script_error_too_large">Lo ZIP è troppo grande per essere estratto (limite: 64 MiB).</string>
+
+    <string name="script_error_corrupt">Lo ZIP è danneggiato o usa un formato non supportato.</string>
+
+    <string name="script_error_params">params.json non è valido: %s</string>
+
+    <string name="script_error_generic">Preparazione dello script non riuscita: %s</string>
+
+    <string name="script_notice">Questo script viene eseguito una sola volta con i privilegi di root; non installa nulla. Controlla il sorgente prima di eseguirlo.</string>
+
+    <string name="script_local_notice">Questo ZIP è uno script one-shot. Puoi eseguirlo una volta senza installarlo, oppure installarlo comunque come modulo.</string>
+
+    <string name="script_install_anyway">Installa comunque come modulo</string>
+
+    <string name="script_params">Parametri</string>
+
+    <string name="script_source">Sorgente di action.sh</string>
+
+    <string name="script_source_truncated">(troncato)</string>
+
+    <string name="script_last_run">Ultima esecuzione: %1$s, codice di uscita %2$d</string>
+
+    <string name="script_last_run_version">Ultima esecuzione: %1$s (versionCode %2$d), codice di uscita %3$d</string>
+
+    <string name="script_never_run">Non ancora eseguito su questo dispositivo</string>
+
+    <string name="script_run_confirm">Eseguire «%s» con i privilegi di root adesso?</string>
+
+    <string name="script_result_success">Lo script è terminato con successo.</string>
+
+    <string name="script_result_not_applicable">Questo script non è applicabile a questo dispositivo (codice di uscita 2).</string>
+
+    <string name="script_result_failed">Lo script è fallito con codice di uscita %d.</string>
+
+    <string name="script_param_required">Questo campo è obbligatorio</string>
+
+    <string name="script_param_too_long">Massimo %d caratteri</string>
+
+    <string name="script_param_invalid_characters">Le interruzioni di riga non sono consentite</string>
+
+    <string name="script_param_not_integer">Inserisci un numero intero</string>
+
+    <string name="script_param_below_min">Deve essere almeno %d</string>
+
+    <string name="script_param_above_max">Deve essere al massimo %d</string>
+
+    <string name="script_param_invalid">Valore non valido</string>
+
+    <string name="fake_launcher_label_manager">Gestore KSU</string>
+
+    <string name="fake_install_title">Installa</string>
+
+    <string name="fake_unsupported_action">Questa azione richiede un kernel reale ed è disabilitata in FakeKernelSU</string>
+
+    <string name="fake_install_desc">FakeKernelSU è una build di simulazione solo a scopo dimostrativo. Nessun kernel viene modificato e non viene concesso alcun accesso root reale. L\'«installazione diretta» imposta solo un marcatore all\'interno dell\'app, così il gestore mostra uno stato funzionante.</string>
+
+    <string name="fake_install_direct_summary">Installazione diretta (consigliata): applica la patch all\'immagine di avvio simulata dentro l\'app</string>
+
+    <string name="fake_settings_entry">Laboratorio FakeKernelSU</string>
+
+    <string name="fake_settings_entry_summary">Pannello di controllo della simulazione: stato di installazione, versione, informazioni home e altro</string>
+
+    <string name="fake_about_tap_hint">Ancora %1$d tocchi per aprire il laboratorio</string>
+
+    <string name="fake_panel_title">Laboratorio FakeKernelSU</string>
+
+    <string name="fake_panel_state">Stato di installazione</string>
+
+    <string name="fake_panel_state_auto">Segui lo stato reale</string>
+
+    <string name="fake_panel_state_auto_summary">Mostra «installato» solo dopo aver eseguito un\'installazione</string>
+
+    <string name="fake_panel_state_installed">Installato</string>
+
+    <string name="fake_panel_state_installed_summary">Versione del gestore rilevata, mostrata come funzionante</string>
+
+    <string name="fake_panel_state_not_installed">Non installato</string>
+
+    <string name="fake_panel_state_not_installed_summary">Mostra la pagina «non installato» con una voce di installazione</string>
+
+    <string name="fake_panel_state_unsupported">Non supportato</string>
+
+    <string name="fake_panel_state_unsupported_summary">Kernel non supportato, solo funzioni base disponibili</string>
+
+    <string name="fake_panel_root">Root concesso</string>
+
+    <string name="fake_panel_root_summary">Se spento, il gestore mostra «accesso root non riuscito» pur continuando a segnalare come installato (stato misto)</string>
+
+    <string name="fake_panel_version">Versione del gestore</string>
+
+    <string name="fake_panel_version_hint">Codice versione, ad es. 13000</string>
+
+    <string name="fake_panel_lkm">Modalità LKM</string>
+
+    <string name="fake_panel_lkm_none">Nessuna</string>
+
+    <string name="fake_panel_home_overrides">Sovrascritture informazioni home</string>
+
+    <string name="fake_panel_override_hint">Lascia vuoto per mostrare il valore reale del dispositivo</string>
+
+    <string name="fake_panel_app_name">Nome dell\'app</string>
+
+    <string name="fake_panel_launcher_label">Etichetta del launcher</string>
+
+    <string name="fake_panel_in_app_name">Nome nell\'app</string>
+
+    <string name="fake_panel_su_mode">Richiesta su simulata</string>
+
+    <string name="fake_panel_su_pick">Scegli un\'app</string>
+
+    <string name="fake_panel_su_random">App casuale</string>
+
+    <string name="fake_panel_stealth">Modalità stealth</string>
+
+    <string name="fake_panel_danger">Zona di pericolo</string>
+
+    <string name="fake_panel_reset">Reimposta lo stato di simulazione</string>
+
+    <string name="fake_panel_wipe">Cancella tutti i dati</string>
+
+    <string name="fake_panel_wipe_confirm">Questo cancellerà tutti i dati di simulazione, i profili e i log, e reimposterà tutte le opzioni. Continuare?</string>
+
+    <string name="fake_panel_disclaimer">Questa app è una demo di simulazione. Non modifica mai il tuo kernel e non concede alcun accesso root reale. Tutti i dati sono archiviati solo nella directory privata dell\'app.</string>
+
+    <string name="fake_su_trigger">Simula richiesta su</string>
+
+    <string name="fake_su_trigger_summary">Mostra un realistico dialogo di richiesta root e registralo nel log su</string>
+
+    <string name="fake_su_not_installed">FakeKernelSU non è installato: installalo prima</string>
+
+    <string name="fake_su_no_apps">Nessuna app disponibile per inviare una richiesta</string>
+
+    <string name="fake_su_pick_title">Scegli un\'app</string>
+
+    <string name="fake_su_request_title">Richiesta root</string>
+
+    <string name="fake_su_request_message">Consentire a %1$s di ottenere i privilegi root?</string>
+
+    <string name="fake_su_remember">Ricorda la mia scelta</string>
+
+    <string name="fake_su_allow">Consenti</string>
+
+    <string name="fake_su_deny">Nega</string>
+
+    <string name="fake_su_granted_toast">Root concesso a %1$s</string>
+
+    <string name="fake_su_denied_toast">%1$s negato</string>
+
+    <string name="fake_launcher_label_fake">FakeKernelSU</string>
+
+    <string name="fake_launcher_label_ksu">KernelSU</string>
+
+    <string name="fake_launcher_label_short">KSU</string>
+
+    <string name="fake_panel_lkm_gki">GKI</string>
+
+    <string name="fake_panel_lkm_lkm">LKM</string>
+
+    <!-- FakeKernelSU: lab panel -->
+    <string name="fake_edit_reset">Usa il valore reale</string>
+    <string name="fake_edit_save">Salva</string>
+    <string name="fake_feature_status_managed">Gestito</string>
+    <string name="fake_feature_status_supported">Supportato</string>
+    <string name="fake_feature_status_unsupported">Non supportato</string>
+    <string name="fake_follow_system">Segui il sistema</string>
+    <string name="fake_home_edit_hint">Lascia vuoto per usare il valore reale del dispositivo</string>
+    <string name="fake_home_edit_summary">Tieni premuta una riga per cambiare ciò che mostra la schermata home</string>
+    <string name="fake_jailbreak_confirm">Entrare in modalità jailbreak?\n\nL\'accesso root viene acquisito a runtime (late-load). Un riavvio lo azzera e il dispositivo deve essere jailbreakato di nuovo.</string>
+    <string name="fake_jailbreak_enabled">La modalità jailbreak è ora attiva</string>
+    <string name="fake_jailbreak_rebooted">Modalità jailbreak terminata</string>
+    <string name="fake_panel_brand">Nome del brand</string>
+    <string name="fake_panel_brand_in_use">Brand mostrato come %1$s</string>
+    <string name="fake_panel_brand_summary">Usato nei testi dell\'app; vuoto = nome dell\'app</string>
+    <string name="fake_panel_compare_value">Confronto con %1$d</string>
+    <string name="fake_panel_feature_status">Stato delle funzioni</string>
+    <string name="fake_panel_feature_status_summary">Simula lo stato disattivato</string>
+    <string name="fake_panel_hide_entry_message">La voce del laboratorio sparirà dalle impostazioni. Il laboratorio non viene rimosso: tieni premuto il titolo della schermata home per riaprirlo.</string>
+    <string name="fake_panel_ksu_version">Versione di KSU</string>
+    <string name="fake_panel_ksu_version_summary">Mostrata come versione funzionante</string>
+    <string name="fake_panel_lkm_update">Aggiornamento del LKM incluso</string>
+    <string name="fake_panel_lkm_update_summary">Mostra il banner "è disponibile un LKM incluso più recente" nella schermata home (solo in modalità LKM)</string>
+    <string name="fake_panel_long_press_hint">Per riaprire il laboratorio: tieni premuto il titolo della schermata home.</string>
+    <string name="fake_panel_manager_version_code">Codice versione del gestore</string>
+    <string name="fake_panel_manager_version_code_summary">Usato dal controllo degli aggiornamenti; vuoto = reale</string>
+    <string name="fake_panel_manager_version_name">Nome di versione del gestore</string>
+    <string name="fake_panel_manager_version_name_summary">Mostrato nella schermata home; vuoto = reale</string>
+    <string name="fake_panel_mode">Modalità</string>
+    <string name="fake_panel_naming">Nome &amp; camuffamento</string>
+    <string name="fake_panel_runtime">Esecuzione</string>
+    <string name="fake_panel_seccomp_status">Stato di Seccomp</string>
+    <string name="fake_panel_selinux_mode">Modalità SELinux</string>
+    <string name="fake_panel_stealth_summary">Rimuovi la voce del laboratorio dalle impostazioni</string>
+    <string name="fake_panel_system_info">Informazioni di sistema</string>
+    <string name="fake_panel_version_mode">Versione &amp; modalità</string>
+</resources>
