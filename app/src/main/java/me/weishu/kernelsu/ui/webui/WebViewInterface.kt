@@ -27,9 +27,22 @@ class WebViewInterface(private val state: WebUIState) {
     private val webView get() = state.webView
     private val modDir get() = state.modDir
 
+    /**
+     * FakeKernelSU never executes commands coming from a module's webroot.
+     *
+     * Upstream bridges the module WebUI to a root shell, so a module can run
+     * anything it wants. This demo has no root and must not run untrusted
+     * code with the app's own privileges either, so `exec`/`spawn` only report
+     * what *would* have been executed.
+     */
+    private val notExecutedMessage =
+        "FakeKernelSU does not execute commands: it is a demo build without root."
+
+    private val notExecutedExitCode = 127
+
     @JavascriptInterface
     fun exec(cmd: String): String {
-        return withNewRootShell(true) { ShellUtils.fastCmd(this, cmd) }
+        return notExecutedMessage
     }
 
     @JavascriptInterface
@@ -64,16 +77,12 @@ class WebViewInterface(private val state: WebUIState) {
         processOptions(finalCommand, options)
         finalCommand.append(cmd)
 
-        val result = withNewRootShell(true) {
-            newJob().add(finalCommand.toString()).to(ArrayList(), ArrayList()).exec()
-        }
-        val stdout = result.out.joinToString(separator = "\n")
-        val stderr = result.err.joinToString(separator = "\n")
+        val stderr = "$notExecutedMessage\n- would run: $finalCommand"
 
         val jsCode =
-            "javascript: (function() { try { ${callbackFunc}(${result.code}, ${
+            "javascript: (function() { try { ${callbackFunc}(${notExecutedExitCode}, ${
                 JSONObject.quote(
-                    stdout
+                    ""
                 )
             }, ${JSONObject.quote(stderr)}); } catch(e) { console.error(e); } })();"
         webView?.post {
@@ -99,8 +108,6 @@ class WebViewInterface(private val state: WebUIState) {
             finalCommand.append(command)
         }
 
-        val shell = createRootShell(true)
-
         val emitData = fun(name: String, data: String) {
             val jsCode =
                 "javascript: (function() { try { ${callbackFunc}.${name}.emit('data', ${
@@ -113,45 +120,12 @@ class WebViewInterface(private val state: WebUIState) {
             }
         }
 
-        val stdout = object : CallbackList<String>(UiThreadHandler::runAndWait) {
-            override fun onAddElement(s: String) {
-                emitData("stdout", s)
-            }
-        }
+        emitData("stdout", "$notExecutedMessage\n- would run: $finalCommand")
 
-        val stderr = object : CallbackList<String>(UiThreadHandler::runAndWait) {
-            override fun onAddElement(s: String) {
-                emitData("stderr", s)
-            }
-        }
-
-        val future = shell.newJob().add(finalCommand.toString()).to(stdout, stderr).enqueue()
-        val completableFuture = CompletableFuture.supplyAsync {
-            future.get()
-        }
-
-        completableFuture.thenAccept { result ->
-            val emitExitCode =
-                "javascript: (function() { try { ${callbackFunc}.emit('exit', ${result.code}); } catch(e) { console.error(`emitExit error: \${e}`); } })();"
-            webView?.post {
-                webView?.loadUrl(emitExitCode)
-            }
-
-            if (result.code != 0) {
-                val emitErrCode =
-                    "javascript: (function() { try { var err = new Error(); err.exitCode = ${result.code}; err.message = ${
-                        JSONObject.quote(
-                            result.err.joinToString(
-                                "\n"
-                            )
-                        )
-                    };${callbackFunc}.emit('error', err); } catch(e) { console.error('emitErr', e); } })();"
-                webView?.post {
-                    webView?.loadUrl(emitErrCode)
-                }
-            }
-        }.whenComplete { _, _ ->
-            runCatching { shell.close() }
+        val emitExitCode =
+            "javascript: (function() { try { ${callbackFunc}.emit('exit', ${notExecutedExitCode}); } catch(e) { console.error('emitExit error', e); } })();"
+        webView?.post {
+            webView?.loadUrl(emitExitCode)
         }
     }
 

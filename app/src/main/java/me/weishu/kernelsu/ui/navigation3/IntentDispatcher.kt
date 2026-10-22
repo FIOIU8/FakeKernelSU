@@ -29,7 +29,10 @@ import me.weishu.kernelsu.ui.util.DownloadService
 import me.weishu.kernelsu.ui.util.getFileName
 import me.weishu.kernelsu.ui.webui.WebUIActivity
 
-private const val SCHEME_KSU = "ksu"
+// FakeKernelSU does not claim the official "ksu://" scheme: on a device that
+// has both this app and the real manager installed, every "ksu://" link would
+// become ambiguous. The links stay token protected either way.
+private const val SCHEME_KSU = "fksu"
 private const val HOST_ACTION = "action"
 private const val HOST_WEBUI = "webui"
 private const val PARAM_ID = "id"

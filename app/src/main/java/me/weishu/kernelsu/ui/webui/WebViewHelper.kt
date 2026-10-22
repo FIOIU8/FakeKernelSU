@@ -106,6 +106,10 @@ internal suspend fun prepareWebView(
             webView.webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                     val url = request.url
+                    // "ksu://icon/<package>" is a content convention of the
+                    // module WebUI pages (they use it to show app icons), not
+                    // a registered protocol, so it keeps the upstream scheme
+                    // even though the app itself answers on "fksu://".
                     if (url.scheme.equals("ksu", ignoreCase = true) && url.host.equals("icon", ignoreCase = true)) {
                         val packageName = url.path?.substring(1)
                         if (!packageName.isNullOrEmpty()) {

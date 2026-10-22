@@ -17,6 +17,27 @@
 
     <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
 
+    <!--
+      Package visibility (Android 11+ / API 30+).
+
+      Upstream enumerates the installed apps through a root AIDL service, so it
+      never needed to declare package visibility. FakeKernelSU replaced that
+      service with the PackageManager (see data/repository/AppCatalog.kt), and
+      on API 30+ getInstalledPackages() only returns the packages the app can
+      already see. Without this declaration the superuser list and the
+      simulated su-request picker would be empty on every supported device.
+
+      Deliberately not QUERY_ALL_PACKAGES: a demo should not ask for a
+      permission that lets it see every app on the device.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name=".KernelSUApplication"
         android:allowBackup="true"
@@ -44,6 +65,13 @@
                     android:mimeType="application/zip"
                     android:scheme="content" />
             </intent-filter>
+            <!--
+              FakeKernelSU uses its own scheme. The official manager claims
+              "ksu://" as well, and a demo that claims it as well makes every
+              "ksu://" link ambiguous on a device that has both installed.
+              The links are token protected (see IntentDispatcher), so nothing
+              outside the app can drive them anyway.
+            -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -51,7 +79,7 @@
 
                 <data
                     android:host="action"
-                    android:scheme="ksu" />
+                    android:scheme="fksu" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -60,7 +88,7 @@
 
                 <data
                     android:host="webui"
-                    android:scheme="ksu" />
+                    android:scheme="fksu" />
             </intent-filter>
         </activity>
 
@@ -71,7 +99,7 @@
             android:targetActivity=".ui.MainActivity"
             android:enabled="true"
             android:exported="true"
-            android:label="@string/launcher_label_fake"
+            android:label="@string/fake_launcher_label_fake"
             android:icon="@mipmap/ic_launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -84,7 +112,7 @@
             android:targetActivity=".ui.MainActivity"
             android:enabled="false"
             android:exported="true"
-            android:label="@string/launcher_label_ksu"
+            android:label="@string/fake_launcher_label_ksu"
             android:icon="@mipmap/ic_launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -97,7 +125,7 @@
             android:targetActivity=".ui.MainActivity"
             android:enabled="false"
             android:exported="true"
-            android:label="@string/launcher_label_manager"
+            android:label="@string/fake_launcher_label_manager"
             android:icon="@mipmap/ic_launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -110,7 +138,7 @@
             android:targetActivity=".ui.MainActivity"
             android:enabled="false"
             android:exported="true"
-            android:label="@string/launcher_label_short"
+            android:label="@string/fake_launcher_label_short"
             android:icon="@mipmap/ic_launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

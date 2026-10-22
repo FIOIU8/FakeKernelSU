@@ -14,6 +14,7 @@ import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import me.weishu.kernelsu.BuildConfig
@@ -43,8 +44,10 @@ private const val TAG = "KsuCli"
 data class FlashResult(val code: Int, val err: String, val showReboot: Boolean)
 
 object KsuCli {
-    val SHELL: Shell = createRootShell()
-    val GLOBAL_MNT_SHELL: Shell = createRootShell(true)
+    // `by lazy` instead of eager vals: a system image without a usable shell
+    // must not take the whole app down while the KsuCli class is initialized.
+    val SHELL: Shell by lazy { createRootShell() }
+    val GLOBAL_MNT_SHELL: Shell by lazy { createRootShell(true) }
 }
 
 fun getRootShell(globalMnt: Boolean = false): Shell {
@@ -73,17 +76,27 @@ fun Uri.getFileName(context: Context): String? {
 }
 
 /**
- * Upstream builds a root shell out of libksud.so; the fake manager just runs a
- * plain unprivileged sh — good enough for reading system properties.
+ * Creates the shell the demo uses for read-only system queries.
+ *
+ * FakeKernelSU must never obtain root. libsu's builder tries `su` first and
+ * only falls back to a plain shell when root is unavailable (see
+ * `BuilderImpl.start()` in libsu), so on a rooted device the default builder
+ * would hand this app a **root** shell - which would let the bugreport
+ * collector read `/data/adb` and the WebUI bridge run arbitrary commands.
+ * `Shell.FLAG_NON_ROOT_SHELL` makes libsu skip both `su` attempts and go
+ * straight to an unprivileged `sh`.
+ *
+ * @param globalMnt kept for API parity with upstream; a non-root shell has no
+ *   mount namespace to switch to, so the flag is ignored.
  */
 fun createRootShell(globalMnt: Boolean = false): Shell {
     Shell.enableVerboseLogging = BuildConfig.DEBUG
-    val builder = Shell.Builder.create()
+    val builder = Shell.Builder.create().setFlags(Shell.FLAG_NON_ROOT_SHELL)
     return try {
         builder.build("sh")
     } catch (e: Throwable) {
-        Log.w(TAG, "sh failed: ", e)
-        builder.build("sh")
+        Log.w(TAG, "unable to create a non-root shell: ", e)
+        throw e
     }
 }
 
@@ -203,47 +216,57 @@ fun runModuleAction(
         return false
     }
     onStdout("- Running action.sh of $moduleId")
-    return runLocalScript(script.absolutePath, dir.absolutePath, onStdout, onStderr) == 0
+    return replayScript(script, onStdout, onStderr) == 0
 }
 
 /**
- * Runs a prepared one-shot script command (see ScriptCommand). Unlike the rest
- * of the fake daemon this really executes — as the unprivileged app user — so
- * the script screen produces genuine output.
+ * FakeKernelSU never executes code that came out of a user-provided ZIP.
+ *
+ * Upstream runs a module's `action.sh` (or a one-shot script) through ksud
+ * with root. A demo has no business doing that: it would either need root
+ * (which this app must never obtain) or it would run untrusted code with the
+ * app's own privileges. The script is therefore only *replayed* - its content
+ * is echoed as a simulated log and the call reports success, so the action
+ * screen and the script screen still look alive.
+ */
+private const val MAX_REPLAYED_SCRIPT_LINES = 200
+
+private fun replayScript(
+    script: File,
+    onStdout: (String) -> Unit,
+    onStderr: (String) -> Unit,
+): Int {
+    onStdout("- FakeKernelSU does not execute scripts: it has no root and no kernel.")
+    onStdout("- ${script.name} (${script.length()} bytes) would be run by ksud as root:")
+    val lines = runCatching { script.readLines() }.getOrDefault(emptyList())
+    lines.take(MAX_REPLAYED_SCRIPT_LINES).forEach { onStdout("  | $it") }
+    if (lines.size > MAX_REPLAYED_SCRIPT_LINES) {
+        onStdout("  | ... (${lines.size - MAX_REPLAYED_SCRIPT_LINES} more lines)")
+    }
+    onStdout("- Done (simulated).")
+    return 0
+}
+
+/**
+ * A prepared one-shot script command (see ScriptCommand) is only reported,
+ * never executed - see [replayScript].
  */
 fun runOneshotScript(
     command: String, onStdout: (String) -> Unit, onStderr: (String) -> Unit
 ): Int {
-    val cwd = FakeState.ksuDir.absolutePath
-    return runLocalScript(command, cwd, onStdout, onStderr)
+    onStdout("- Working directory: ${FakeState.ksuDir.absolutePath}")
+    onStdout("- Command: $command")
+    onStdout("- FakeKernelSU does not execute scripts: it has no root and no kernel.")
+    onStdout("- Done (simulated).")
+    return 0
 }
 
-private fun runLocalScript(
-    command: String,
-    cwd: String,
-    onStdout: (String) -> Unit,
-    onStderr: (String) -> Unit,
-): Int {
-    return try {
-        val process = ProcessBuilder("sh", "-c", command)
-            .directory(File(cwd).takeIf { it.isDirectory } ?: ksuApp.filesDir)
-            .redirectErrorStream(true)
-            .start()
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-        var line: String?
-        while (reader.readLine().also { line = it } != null) {
-            onStdout(line!!)
-        }
-        val code = process.waitFor()
-        if (code != 0) onStderr("! Exit code: $code")
-        code
-    } catch (e: Exception) {
-        onStderr("! ${e.message ?: "Failed to run script"}")
-        -1
-    }
-}
-
-/** Removes a script's extraction directory, including files the script created as root. */
+/**
+ * Removes a script's extraction directory.
+ *
+ * The name is kept for API parity with upstream, but nothing is ever created
+ * as root any more, so this is a plain app-privileged delete.
+ */
 fun removeAsRoot(path: String): Boolean {
     return runCatching { File(path).deleteRecursively() }.getOrDefault(false)
 }
@@ -282,8 +305,12 @@ sealed class LkmSelection : Parcelable {
 /**
  * The fake "direct install": writes the install flag while playing a
  * believable ksud boot-patch log. No partition is ever touched.
+ *
+ * Suspending rather than sleeping: the caller runs on Dispatchers.IO and the
+ * screen owns the coroutine, so leaving the page now cancels the remaining
+ * fake log instead of keeping a thread parked for two seconds.
  */
-fun installBoot(
+suspend fun installBoot(
     bootUri: Uri?,
     lkm: LkmSelection,
     ota: Boolean,
@@ -298,12 +325,9 @@ fun installBoot(
     val kmi = (lkm as? LkmSelection.KmiString)?.value
         ?: runCatching { Os.uname().release }.getOrDefault("unknown")
 
-    fun step(line: String, delayMs: Long = 250L) {
+    suspend fun step(line: String, delayMs: Long = 250L) {
         onStdout(line)
-        try {
-            Thread.sleep(delayMs)
-        } catch (_: InterruptedException) {
-        }
+        delay(delayMs)
     }
 
     step("- Detecting device and kernel", 150)
@@ -412,11 +436,34 @@ fun hasMagisk(): Boolean = false
 
 // -------------------------------------------------------- sepolicy/templates
 
-fun isSepolicyValid(rules: String?): Boolean = true
+/**
+ * The demo has no kernel, so there is no sepolicy store to write to.
+ *
+ * The old implementation answered `true` to everything, which made the app
+ * profile page show a bogus "valid" state for input that was never applied
+ * anywhere. The rules are now checked for a plausible shape and kept in the
+ * local profile, so the page reflects what actually happened.
+ */
+fun isSepolicyValid(rules: String?): Boolean {
+    if (rules.isNullOrBlank()) return false
+    return rules.lineSequence().all { line ->
+        val trimmed = line.trim()
+        trimmed.isEmpty() ||
+            trimmed.startsWith("#") ||
+            trimmed.split(Regex("\\s+")).size >= 2
+    }
+}
 
-fun getSepolicy(pkg: String): String = ""
+fun getSepolicy(pkg: String): String {
+    if (pkg.isBlank()) return ""
+    return Natives.getAppProfile(pkg, 0).rules
+}
 
-fun setSepolicy(pkg: String, rules: String): Boolean = true
+fun setSepolicy(pkg: String, rules: String): Boolean {
+    if (pkg.isBlank() || !isSepolicyValid(rules)) return false
+    val profile = Natives.getAppProfile(pkg, 0)
+    return Natives.setAppProfile(profile.copy(rules = rules))
+}
 
 fun listAppProfileTemplates(): List<String> = FakeModules.listTemplates()
 

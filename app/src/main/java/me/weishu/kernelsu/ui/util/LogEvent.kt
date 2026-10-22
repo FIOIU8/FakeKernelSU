@@ -5,70 +5,48 @@ import android.os.Build
 import android.system.Os
 import com.topjohnwu.superuser.ShellUtils
 import me.weishu.kernelsu.Natives
+import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ui.screen.home.getManagerVersion
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.zip.GZIPOutputStream
 
+/**
+ * Collects the bugreport.
+ *
+ * FakeKernelSU only ever touches its own sandbox. Upstream - which runs with
+ * root - additionally collected `/data/adb`, `/data/system/dropbox`,
+ * `/data/tombstones`, `/data/vendor/diag`, several `/proc` files and even
+ * rewrote `/proc/sys/kernel/kptr_restrict` to dump the kernel symbols.
+ *
+ * A demo that promises to leave the system alone must not do any of that, so
+ * the report contains the app's own state (the fake `/data/adb` tree, the
+ * module list) plus a handful of unprivileged system properties.
+ *
+ * The archive is written in pure Java: no shell, and therefore no chance of
+ * the collector ending up with more privileges than the app itself.
+ */
 fun getBugreportFile(context: Context): File {
 
     val bugreportDir = File(context.cacheDir, "bugreport")
     bugreportDir.mkdirs()
 
-    val processFile = File(bugreportDir, "process.txt")
-    val dmesgFile = File(bugreportDir, "dmesg.txt")
-    val logcatFile = File(bugreportDir, "logcat.txt")
-    val tombstonesFile = File(bugreportDir, "tombstones.tar.gz")
-    val dropboxFile = File(bugreportDir, "dropbox.tar.gz")
-    val pstoreFile = File(bugreportDir, "pstore.tar.gz")
-    // Xiaomi/Readmi devices have diag in /data/vendor/diag
-    val diagFile = File(bugreportDir, "diag.tar.gz")
-    val oplusFile = File(bugreportDir, "oplus.tar.gz")
-    val bootlogFile = File(bugreportDir, "bootlog.tar.gz")
-    val mountsFile = File(bugreportDir, "mounts.txt")
-    val fileSystemsFile = File(bugreportDir, "filesystems.txt")
-    val adbFileTree = File(bugreportDir, "adb_tree.txt")
-    val adbFileDetails = File(bugreportDir, "adb_details.txt")
-    val ksuFileSize = File(bugreportDir, "ksu_size.txt")
-    val appListFile = File(bugreportDir, "packages.txt")
-    val propFile = File(bugreportDir, "props.txt")
-    val allowListFile = File(bugreportDir, "allowlist.bin")
-    val procModules = File(bugreportDir, "proc_modules.txt")
-    val bootConfig = File(bugreportDir, "boot_config.txt")
-    val kernelConfig = File(bugreportDir, "defconfig.gz")
-    val kallsyms = File(bugreportDir, "kallsyms.txt")
+    // ---------------------------------------------------------- own state
+    File(bugreportDir, "modules.json").writeText(listModules())
+    copyTree(FakeState.adbRoot, File(bugreportDir, "fake_data"))
 
-    val shell = getRootShell(true)
-
-    // busybox ps has very few features for embed devices
-    shell.newJob().add("toybox ps -T -A -w -o PID,TID,UID,COMM,CMDLINE,CMD,LABEL,STAT,WCHAN > ${processFile.absolutePath}").exec()
-    shell.newJob().add("dmesg -r > ${dmesgFile.absolutePath}").exec()
-    shell.newJob().add("logcat -b all -v uid -d > ${logcatFile.absolutePath}").exec()
-    shell.newJob().add("tar -czf ${tombstonesFile.absolutePath} -C /data/tombstones .").exec()
-    shell.newJob().add("tar -czf ${dropboxFile.absolutePath} -C /data/system/dropbox .").exec()
-    shell.newJob().add("tar -czf ${pstoreFile.absolutePath} -C /sys/fs/pstore .").exec()
-    shell.newJob().add("tar -czf ${diagFile.absolutePath} -C /data/vendor/diag . --exclude=./minidump.gz").exec()
-    shell.newJob().add("tar -czf ${oplusFile.absolutePath} -C /mnt/oplus/op2/media/log/boot_log/ .").exec()
-    shell.newJob().add("tar -czf ${bootlogFile.absolutePath} -C /data/adb/ksu/log .").exec()
-
-    shell.newJob().add("cat /proc/1/mountinfo > ${mountsFile.absolutePath}").exec()
-    shell.newJob().add("cat /proc/filesystems > ${fileSystemsFile.absolutePath}").exec()
-    shell.newJob().add("busybox tree /data/adb > ${adbFileTree.absolutePath}").exec()
-    shell.newJob().add("ls -alRZ /data/adb > ${adbFileDetails.absolutePath}").exec()
-    shell.newJob().add("du -sh /data/adb/ksu/* > ${ksuFileSize.absolutePath}").exec()
-    shell.newJob().add("cp /data/system/packages.list ${appListFile.absolutePath}").exec()
-    shell.newJob().add("getprop > ${propFile.absolutePath}").exec()
-    shell.newJob().add("cp /data/adb/ksu/.allowlist ${allowListFile.absolutePath}").exec()
-    shell.newJob().add("cp /proc/modules ${procModules.absolutePath}").exec()
-    shell.newJob().add("cp /proc/bootconfig ${bootConfig.absolutePath}").exec()
-    shell.newJob().add("cp /proc/config.gz ${kernelConfig.absolutePath}").exec()
-    shell.newJob()
-        .add($$"ORIG=$(cat /proc/sys/kernel/kptr_restrict); echo 1 > /proc/sys/kernel/kptr_restrict; cat /proc/kallsyms > $${kallsyms.absolutePath}; echo $ORIG > /proc/sys/kernel/kptr_restrict")
-        .exec()
-
-    val selinux = ShellUtils.fastCmd(shell, "getenforce")
+    // ------------------------------------------- unprivileged system info
+    val shell = runCatching { getRootShell(true) }.getOrNull()
+    val selinux = shell?.let { runCatching { ShellUtils.fastCmd(it, "getenforce") }.getOrNull() }
+        ?: ""
+    val props = shell?.let { runCatching { ShellUtils.fastCmd(it, "getprop") }.getOrNull() }
+        ?: ""
+    File(bugreportDir, "props.txt").writeText(props)
 
     // basic information
     val buildInfo = File(bugreportDir, "basic.txt")
@@ -84,6 +62,7 @@ fun getBugreportFile(context: Context): File {
         pw.println("DEVICE: " + Build.DEVICE)
         pw.println("Manager: " + getManagerVersion(context))
         pw.println("SELinux: $selinux")
+        pw.println("Note: FakeKernelSU collects only its own private data.")
 
         val uname = Os.uname()
         pw.println("KernelRelease: ${uname.release}")
@@ -100,19 +79,54 @@ fun getBugreportFile(context: Context): File {
         pw.println("LKM: $lkmMode")
     }
 
-    // modules
-    val modulesFile = File(bugreportDir, "modules.json")
-    modulesFile.writeText(listModules())
-
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH_mm")
     val current = LocalDateTime.now().format(formatter)
 
     val targetFile = File(context.cacheDir, "KernelSU_bugreport_${current}.tar.gz")
+    createTarGz(bugreportDir, targetFile)
 
-    shell.newJob().add("tar czf ${targetFile.absolutePath} -C ${bugreportDir.absolutePath} .").exec()
-    shell.newJob().add("rm -rf ${bugreportDir.absolutePath}").exec()
-    shell.newJob().add("chmod 0644 ${targetFile.absolutePath}").exec()
+    bugreportDir.deleteRecursively()
 
     return targetFile
 }
 
+/** Copies [source] into [target], keeping the relative layout. */
+private fun copyTree(source: File, target: File) {
+    if (!source.isDirectory) return
+    source.walkTopDown().filter { it.isFile }.forEach { file ->
+        val destination = File(target, file.relativeTo(source).path)
+        destination.parentFile?.mkdirs()
+        runCatching { file.copyTo(destination, overwrite = true) }
+    }
+}
+
+/**
+ * Packs [sourceDir] into a gzipped tar archive at [target].
+ *
+ * Done in Java on purpose: the demo does not need a shell to produce a
+ * report, and using one would be the only remaining way for the collector to
+ * end up running with more privileges than the app.
+ */
+private fun createTarGz(sourceDir: File, target: File) {
+    target.outputStream().use { fileOut ->
+        GZIPOutputStream(fileOut).use { gzip ->
+            TarArchiveOutputStream(gzip).use { tar ->
+                tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX)
+                sourceDir.walkTopDown().forEach { file ->
+                    val relative = file.relativeTo(sourceDir).path
+                    if (relative.isEmpty()) return@forEach
+                    val entry = TarArchiveEntry(if (file.isDirectory) "$relative/" else relative)
+                    if (file.isFile) {
+                        entry.size = file.length()
+                        tar.putArchiveEntry(entry)
+                        file.inputStream().use { it.copyTo(tar) }
+                    } else {
+                        tar.putArchiveEntry(entry)
+                    }
+                    tar.closeArchiveEntry()
+                }
+                tar.finish()
+            }
+        }
+    }
+}

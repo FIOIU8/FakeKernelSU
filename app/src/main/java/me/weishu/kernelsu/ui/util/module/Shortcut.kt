@@ -28,7 +28,11 @@ import me.weishu.kernelsu.ui.util.isMiui
 object Shortcut {
 
     private const val TAG = "ModuleShortcut"
-    const val SCHEME_KSU = "ksu"
+
+    // Must match the scheme the manifest registers (see
+    // AndroidManifest.xml) - FakeKernelSU uses "fksu://" so it does not
+    // compete with the official manager for "ksu://" links.
+    const val SCHEME_KSU = "fksu"
     const val HOST_ACTION = "action"
     const val HOST_WEBUI = "webui"
 
