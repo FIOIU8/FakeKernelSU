@@ -140,7 +140,15 @@
   -PKEY_PASSWORD=xxx
 ```
 
-CI 的 Release 工作流支持配置仓库密钥 `KEYSTORE_BASE64`（jks 文件的 base64）+ `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`，配了就用正式证书，没配就用 debug 证书。
+生成密钥库（只需一次，`.jks` 永久保管，丢失将无法再更新已发布版本）：
+
+```bash
+keytool -genkeypair -alias fakekernelsu -keyalg RSA -keysize 2048 \
+  -validity 10000 -keystore release.jks \
+  -dname "CN=FakeKernelSU, OU=Release, O=FIOIU8, C=CN"
+```
+
+CI 的 Release 工作流支持配置仓库密钥 `KEYSTORE_BASE64`（jks 文件的 base64，`base64 -w0 release.jks`）+ `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`，配了就用正式证书，没配就用 debug 证书。
 
 ---
 
@@ -336,6 +344,9 @@ seccomp), naming (brand, in-app name, launcher label), hide entry, danger zone (
 - Optional release signing: pass `KEYSTORE_FILE` / `KEYSTORE_PASSWORD` / `KEY_ALIAS` /
   `KEY_PASSWORD` Gradle properties, or configure the repo secrets `KEYSTORE_BASE64` +
   `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD` for the Release workflow.
+- Generate the keystore once and back it up forever (losing it means you can never
+  update published releases):
+  `keytool -genkeypair -alias fakekernelsu -keyalg RSA -keysize 2048 -validity 10000 -keystore release.jks -dname "CN=FakeKernelSU, OU=Release, O=FIOIU8, C=CN"`
 
 ## What this fork changed
 
