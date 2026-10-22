@@ -13,8 +13,12 @@ reference/
 
 dist/
 
-# 文档目录：本地保留，不纳入版本管理
-docs/
+# 文档目录：本地草稿不纳入版本管理
+# 例外：维护者/贡献者需要读到的文档必须入库，否则 clone 下来就看不到
+docs/*
+!docs/upstream-sync.md
+!docs/开发指南.md
+!docs/改造方案.md
 
 # Gradle 工具链自动生成（与机器相关）
 gradle/gradle-daemon-jvm.properties

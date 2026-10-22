@@ -72,23 +72,30 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
 
-      # Create (or reuse) the semver tag BEFORE building, so that
-      # `git describe` inside Gradle yields a clean version name.
-      - name: Create and push tag
+      # The tag is created locally before the build so that `git describe`
+      # inside Gradle yields a clean version name, but it is only pushed
+      # after a successful build (see "Push tag" below). Pushing it up front
+      # left a stale tag on the remote whenever the build failed, and a
+      # re-run with the same version then reused that stale tag - so the
+      # published versionName referred to an older commit than the APK.
+      - name: Create tag (local only)
         id: tag
         env:
           VERSION: ${{ inputs.version }}
         run: |
           TAG="v$VERSION"
           if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
-            echo "Tag $TAG already exists, reusing it."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag -a "$TAG" -m "FakeKernelSU $TAG"
-            git push origin "refs/tags/$TAG"
-            echo "Created and pushed tag $TAG."
+            echo "::error::Tag $TAG already exists locally. Move or delete it before releasing this version."
+            exit 1
           fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists on the remote. Pick a different version."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "FakeKernelSU $TAG"
+          echo "Created local tag $TAG (pushed after a successful build)."
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 21
@@ -147,17 +154,31 @@ jobs:
             -PKEY_ALIAS="$KEY_ALIAS" \
             -PKEY_PASSWORD="$KEY_PASSWORD"
 
+      # Only now that a signed APK exists: publish the tag. If anything above
+      # failed, the tag stays local and the remote never sees a version that
+      # was never built.
+      - name: Push tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          git push origin "refs/tags/$TAG"
+          echo "Pushed tag $TAG."
+
       - name: Collect APK and checksum
         id: apk
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
-          OUT="FakeKernelSU-${TAG}-release.apk"
+          # Keep the name Gradle produced ("FakeKernelSU_v1.1.0_30031-release.apk"):
+          # the in-app update check parses the versionCode out of it
+          # (see ui/util/Downloader.kt), so renaming it would break the check.
+          OUT=$(basename "$APK")
           cp "$APK" "$RUNNER_TEMP/$OUT"
           (cd "$RUNNER_TEMP" && sha256sum "$OUT" > "$OUT.sha256")
           echo "dir=$RUNNER_TEMP" >> "$GITHUB_OUTPUT"
           echo "file=$OUT" >> "$GITHUB_OUTPUT"
+          echo "name=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Generate changelog
         env:
@@ -175,7 +196,7 @@ jobs:
           {
             echo "## FakeKernelSU $TAG"
             echo
-            echo "- APK: \`FakeKernelSU-${TAG}-release.apk\`"
+            echo "- APK: \`${{ steps.apk.outputs.name }}\`"
             echo "- Version name: $(git describe --tags)"
             echo
             if [ -n "$NOTES" ]; then

@@ -5,12 +5,80 @@ on:
     branches: ['**']
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Weekly check whether upstream tiann/KernelSU moved on.
+    - cron: '17 4 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  upstream-divergence:
+    name: Upstream divergence guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # The fork's own rules, checked against the recorded baseline:
+      #   * every upstream file the fork changes or removes is declared in
+      #     tools/upstream/allowlist.txt
+      #   * res/values*/strings.xml stays byte-identical to upstream
+      #   * no resource name is defined twice in one configuration
+      #   * no name in fake_strings.xml collides with an upstream name
+      - name: Verify divergence from the upstream baseline
+        shell: pwsh
+        run: ./tools/verify-divergence.ps1
+
+  upstream-sync-check:
+    name: Upstream sync check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # Full history, not --depth=1: the merge preview below needs the real
+      # merge base (recorded by the graft commit, see docs/upstream-sync.md).
+      - name: Fetch upstream tiann/KernelSU
+        run: |
+          git fetch --no-tags \
+            https://github.com/tiann/KernelSU.git main:refs/remotes/upstream/main
+          git rev-parse refs/remotes/upstream/main
+          echo "merge base: $(git merge-base HEAD refs/remotes/upstream/main || echo none)"
+
+      # Fails when upstream moved on: files the fork has not picked up yet, or
+      # files upstream and the fork both changed (those need a manual merge).
+      # Run tools/sync-upstream.ps1 locally to see the same list.
+      - name: Check for sync drift
+        shell: pwsh
+        run: ./tools/verify-divergence.ps1 -UpstreamRef refs/remotes/upstream/main -SyncRequired
+
+      # The graft gives the fork a real 3-way merge base, so "would the merge
+      # conflict?" can be answered before the maintainer starts one. This step
+      # never fails the job: a conflict in an allowlisted file is expected
+      # (the fork edits it on purpose), it just needs a human.
+      - name: Preview the 3-way merge
+        shell: bash
+        run: |
+          set -uo pipefail
+          if git -c user.name=ci -c user.email=ci@example.invalid \
+               merge --no-commit --no-ff -X subtree=manager refs/remotes/upstream/main; then
+            echo "::notice::Merge preview: no conflicts."
+          else
+            echo "::warning::The 3-way merge would conflict in:"
+            git diff --name-only --diff-filter=U | sed 's/^/  /' || true
+            echo "Resolve them by hand, or run tools/sync-upstream.ps1 instead."
+          fi
+          git merge --abort || true
+
   build:
     name: Build APKs
     runs-on: ubuntu-latest
@@ -66,17 +134,37 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon
 
+      # The 12 unit tests that came in with the upstream import never ran in
+      # this fork's CI. Run them so a regression in the (unmodified) upstream
+      # code is caught here too.
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon
+
       # FakeKernelSU advertises "no native libraries at all" - keep CI honest.
       # Note: the APK file name is derived from archivesName, so glob it.
+      #
+      # Both variants are checked: the published APK is the release one, and a
+      # dependency that only ships a .so into the release variant must not
+      # slip through. `set -euo pipefail` matters here: without it a failed
+      # `ls` would leave $apk empty, `unzip -l ""` would fail, the `if` would
+      # be false and the step would report "OK" for an APK that was never
+      # inspected.
       - name: Verify no native libraries in APK
+        shell: bash
         run: |
-          apk=$(ls app/build/outputs/apk/debug/*.apk | head -1)
-          if unzip -l "$apk" | grep -q '\.so'; then
-            echo "::error::APK contains native libraries, breaking the 'pure demo' promise"
-            unzip -l "$apk" | grep '\.so'
-            exit 1
-          fi
-          echo "OK: no .so files in $apk"
+          set -euo pipefail
+          for apk in app/build/outputs/apk/debug/*.apk app/build/outputs/apk/release/*.apk; do
+            if [ ! -f "$apk" ]; then
+              echo "::error::No APK found at $apk"
+              exit 1
+            fi
+            if unzip -l "$apk" | grep -q '\.so'; then
+              echo "::error::$apk contains native libraries, breaking the 'pure demo' promise"
+              unzip -l "$apk" | grep '\.so'
+              exit 1
+            fi
+            echo "OK: no .so files in $apk"
+          done
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -85,9 +173,16 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Upload release APK
+      # The release variant built here has no keystore, so it is signed with
+      # the debug certificate. It is uploaded for inspection only: a
+      # debug-signed APK can never be updated in place by the officially
+      # signed release (INSTALL_FAILED_UPDATE_INCOMPATIBLE), so installing
+      # this artifact would block the user from ever installing a real
+      # release without uninstalling first - and uninstalling deletes all
+      # demo data. The name says so out loud.
+      - name: Upload release APK (debug-signed, for inspection only)
         uses: actions/upload-artifact@v4
         with:
-          name: FakeKernelSU-release-${{ github.sha }}
+          name: FakeKernelSU-release-debug-signed-${{ github.sha }}
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error

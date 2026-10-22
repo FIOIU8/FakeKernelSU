@@ -22,7 +22,7 @@
 | 会不会重启手机 | **不会**。`reboot()` 被永久改成空操作 |
 | 数据存在哪 | 只在 App 私有目录 `Android/data/com.fake.kernelsu/files/adb/`，卸载 App 即彻底清除 |
 | 会不会写 `/data/adb` | **不会** |
-| 会不会联网上传 | **不会**。没有任何遥测与数据收集；唯一的网络行为是"模块仓库"浏览（继承自上游，可不用） |
+| 会不会联网上传 | **不会**。没有任何遥测与数据收集。仅仅两种可选网络行为：① 浏览"模块仓库"（继承自上游，可不用）；② 更新检查（**默认关闭**，开启后只请求本仓库 `FIOIU8/FakeKernelSU` 的 Releases 接口） |
 
 **FakeKernelSU 是娱乐 / 教学性质的界面模拟演示，与官方 KernelSU 项目无隶属关系。**
 请勿用它绕过任何设备的安全机制。使用者需自行遵守所在地法律法规。
@@ -33,7 +33,7 @@
 
 - **完整的安装流程**：还原官方完整安装页（直接安装 / 安装到备用槽位 / 选择镜像文件 / 下载 boot 镜像 + 高级选项 + KMI 选择），"直接安装"会播放一段高度逼真的 ksud 刷写日志，写入"已安装"标记后回首页显示**工作中**。
 - **双 UI 皮肤**：完整保留 KernelSU 的 Material 3 与 Miuix（类 MIUI / HyperOS 毛玻璃）两套界面，设置里一键切换，功能完全一致。
-- **超级用户授权**：应用列表走 PackageManager；可主动弹出高仿 root 授权框（允许 / 拒绝 / 记住），授权结果挂 ROOT 徽标并写入 su 日志。
+- **超级用户授权**：应用列表走 PackageManager（已声明 `<queries>`，Android 11+ 能看到全部带 launcher 的应用）；可主动弹出高仿 root 授权框（允许 / 拒绝 / 记住），授权结果挂 ROOT 徽标并写入 su 日志。列表**只含主用户（userId 0）**，多用户/工作资料不展示。
 - **模块管理**：装模块 ZIP 会真的解压到本地目录，可启用 / 禁用 / 卸载；保留上游的模块仓库浏览。
 - **su 日志**：授权事件按官方 `sulog` 格式写进本地日志，可在 App 内查看。
 - **越狱模式**：独立的持久化演示模式（late-load 语义，重启失效），未安装 + SELinux Permissive 时首页出现入口。
@@ -92,7 +92,9 @@
 
 - 从 [Releases](../../releases) 页面下载 APK（由 Release 工作流自动构建并提交草稿，维护者审阅后发布）。
 - 要求 **Android 12+（minSdk 31）**，架构不限（APK 内无 native 库）。
-- 未配置正式签名密钥时，Release 产物使用 debug 证书签名——安装即可，能日常更新，但不要用于任何严肃场景。
+- 未配置正式签名密钥时，**本地** `assembleRelease` 会用 debug 证书签名（日常自测方便）；
+  CI 的 Release 工作流则强制要求密钥，缺失就直接失败——避免出现盖不上更新的 debug 签名包。
+  也就是说：从 Releases 页面下载到的正式包一定能覆盖安装升级。
 - 想彻底删干净：直接卸载 App，数据都在它的私有目录里，卸载即消失。
 
 ---
@@ -105,7 +107,7 @@
 |---|---|
 | JDK | 21+ |
 | Gradle | 使用仓库自带 wrapper（9.7.1） |
-| Android SDK | `platforms;android-37`、`build-tools;36.0.0` |
+| Android SDK | `platforms;android-37.0`、`build-tools;36.0.0` |
 | NDK / Rust | **不需要**（native 代码已全部移除） |
 
 ### 构建
@@ -120,13 +122,29 @@
 
 产物在 `app/build/outputs/apk/`。
 
+### 测试
+
+```bash
+# 上游 12 个测试 + fork 的 fake 层测试（原子写、模块 id、解压上限、sulog 序号）
+./gradlew test
+
+# 只跑 fork 自己的 fake 层
+./gradlew test --tests "me.weishu.kernelsu.fake.*"
+```
+
+> **Windows 上的已知噪声**：`DownloadStoreTest` / `FileRegistryCacheTest` / `ScriptPackageTest`
+> 里有 4 条断言依赖 POSIX 语义（`/` 分隔符、文件可执行位、`renameTo` 能覆盖已存在文件），
+> 在 Windows 主机上会红，在 Android 运行时和 Linux CI 上都正常。这 4 条属于上游测试，按约定不修改。
+
 ### 包名 / 应用名 / 版本号
 
 - 包名与应用名由 Gradle 属性控制（已固化在 `gradle.properties`）：
   `KSU_PACKAGE_NAME=com.fake.kernelsu`、`KSU_NAME=FakeKernelSU`；
   也可临时覆盖：`./gradlew assembleDebug -PKSU_PACKAGE_NAME=com.example.fake -PKSU_NAME=MyFake`。
-- **版本号依赖 git**：`versionCode = 30000 + git 提交数`，`versionName = git describe`。
-  因此必须是完整的 git 克隆（含 tags）；用 tarball 构建会失败。CI 中已用 `fetch-depth: 0` 处理。
+- **版本号依赖 git**：`versionCode = 30000 + git 提交数`（`git rev-list --count HEAD`），
+  `versionName = git describe --tags --always`。
+  所以构建目录必须是一个**有提交历史的 git 仓库**；tarball 解压出来的目录会失败。
+  带 tags 时 `versionName` 更好看，没有 tags 会回落到短 SHA（`--always` 兜底）。CI 用 `fetch-depth: 0`。
 
 ### 发布签名（可选）
 
@@ -155,7 +173,7 @@ CI 的 Release 工作流**强制要求**这 4 个仓库密钥：`KEYSTORE_BASE64
 ## 六、这个 Fork 改了什么
 
 上游基线：`tiann/KernelSU` **main 分支**（2026-10 导入，仅 manager 模块）。
-改造共 19 个提交、**114 个文件变更（+8488 / −3261 行）**，原则是：**保留 UI 外壳，把数据层全部换成本地文件 / SharedPreferences**。
+改造共 30 个提交、**123 个文件变更（+9914 / −3262 行）**（复核：`git diff --shortstat 1f70e46 HEAD`），原则是：**保留 UI 外壳，把数据层全部换成本地文件 / SharedPreferences**。
 
 ### 6.1 删除（上游的内核通信链）
 
@@ -179,15 +197,18 @@ CI 的 Release 工作流**强制要求**这 4 个仓库密钥：`KEYSTORE_BASE64
 
 ### 6.3 新增（fork 自己的代码）
 
+fork 自有的文件一律放在**上游不存在的包/目录**下，这样上游更新时不会撞车。
+
 | 新增内容 | 作用 |
 |---|---|
-| `fake/`（`FakeState` / `FakeFeatures` / `FakeProfiles` / `FakeModules` / `FakeSu`） | 全部演示状态的单一数据源 |
+| `fake/`（`FakeState` / `FakeFeatures` / `FakeProfiles` / `FakeModules` / `FakeSu` / `JsonStore`） | 全部演示状态的单一数据源 |
+| `fake/repository/AppCatalog.kt` | 统一取包源（超级用户 / su 选择器共用） |
 | `ui/screen/fakepanel/`（Material + Miuix 双实现） | 实验室控制面板 |
-| `ui/screen/superuser/FakeSuRequest*` | 模拟 su 授权弹窗 |
-| `ui/screen/home/EditSystemInfoDialog` | 首页设备信息长按编辑 |
-| `ui/util/FakeBrand` / `FakeNames` / `FakeUnlock` | 品牌名替换、启动器别名同步、长按解锁手势 |
-| `data/repository/AppCatalog.kt` | 统一取包源（超级用户 / su 选择器共用） |
-| 45 个语言的 fork 新增字符串翻译 | 非中文界面功能不回落英文 |
+| `ui/screen/fakepanel/FakeSuRequest*` | 模拟 su 授权弹窗 |
+| `ui/screen/fakepanel/EditSystemInfoDialog` | 首页设备信息长按编辑 |
+| `ui/fake/FakeBrand` / `FakeNames` / `FakeUnlock` | 品牌名替换、启动器别名同步、长按解锁手势 |
+| `res/values*/fake_strings.xml` | fork 自己的字符串（`fake_*`）+ 对上游资源的补充翻译 |
+| `tools/`（同步 / 校验脚本）+ `docs/upstream-sync.md` | 上游同步流程与防冲突守卫 |
 
 ### 6.4 存储映射（和原版语义一一对应）
 
@@ -206,6 +227,50 @@ CI 的 Release 工作流**强制要求**这 4 个仓库密钥：`KEYSTORE_BASE64
 - 重启 / 软重启按钮不会真的重启（也别真重启）。
 - 管理器"检查更新"沿用上游实现，可用实验室的版本号覆盖避免误报，不需要可在设置里关闭。
 
+### 6.6 上游同步策略（怎么避免"上游一更新就冲突"）
+
+本仓库的仓库根 **就是** 上游 [tiann/KernelSU](https://github.com/tiann/KernelSU) 的 `manager/` 子树，路径 1:1 对应。
+所以每次上游同步，冲突都落在**同名同路径**的文件上。为了让同步几乎不用手工解冲突，仓库做了四件事：
+
+**0）和上游接通了 git 血缘。**
+导入是 squash 快照，原本和上游没有共同祖先，无法 3 路合并。现在用提交 `07c335d`
+记录了上游导入源 `4663610` 作为第二个父（树完全不变），于是可以：
+
+```bash
+git fetch --no-tags upstream main
+git merge -X subtree=manager upstream/main     # 真 3 路合并，冲突可见、可 --abort
+```
+
+**1）共享文件里只放上游的东西。**
+`app/src/main/res/values*/strings.xml` 与上游**逐字节一致**（`git diff` 对上游为零差异）；
+fork 自己的字符串全部搬进同目录的 `fake_strings.xml`，而上游没有这个文件，永远不会撞车。
+
+> 为什么必须这样：上游 47 个 locale 文件里有 45 个保持各自的字符串顺序，新翻译是**追加到文件末尾**的。
+> 只要 fork 在 `strings.xml` 末尾留了一行，上游每补一条翻译就会在**全部 45 个文件**同时冲突。
+
+**2）fork 的资源名统一带 `fake_` 前缀。**
+`fake_strings.xml` 里的名字都以 `fake_` 开头，上游不可能用同样的名字，
+也就不会出现"同名资源出现在同一 configuration → aapt2 duplicate resource → 构建直接失败"。
+
+**3）偏离上游的地方全部登记在册。**
+`tools/upstream/allowlist.txt` 列出 fork 改过/删掉的每一个上游文件并写明原因；
+`tools/verify-divergence.ps1` 是 CI 里的守卫，检查 allowlist 覆盖、资源重复、同步漂移。
+
+日常使用：
+
+```powershell
+# 首选：git 3 路合并（国内网络先 export https_proxy=http://127.0.0.1:7897）
+git fetch --no-tags upstream main
+git merge -X subtree=manager upstream/main
+
+# 备选：上游大改（挪目录/批量重命名）时，文件级覆盖 + MANUAL 清单更省事
+./tools/verify-divergence.ps1 -UpstreamRef upstream/main              # 守卫（CI 每次 push 都跑）
+./tools/sync-upstream.ps1 -UpstreamRef upstream/main                  # 预演上游同步
+./tools/sync-upstream.ps1 -UpstreamRef upstream/main -Apply           # 真正同步
+```
+
+完整流程、规则说明和排错见 [`docs/upstream-sync.md`](docs/upstream-sync.md)。
+
 ---
 
 ## 七、目录结构
@@ -216,17 +281,24 @@ FakeKernelSU/
 │   └── src/main/
 │       ├── java/me/weishu/kernelsu/
 │       │   ├── fake/           # 演示数据层（FakeState 等，fork 新增）
+│       │   │   └── repository/ # AppCatalog（fork 新增）
 │       │   ├── data/           # repository / registry（模块仓库 HTTP）/ script
 │       │   ├── ui/
 │       │   │   ├── screen/     # home / install / flash / superuser / module /
 │       │   │   │               # modulerepo / sulog / settings / about / fakepanel …
+│       │   │   ├── fake/       # fork 自带的 UI 工具（品牌名 / 启动器别名 / 解锁手势）
 │       │   │   ├── component/  # 双 UI 共用组件
 │       │   │   └── theme/      # Material / Miuix 主题
 │       │   └── Natives.kt      # 重写为纯 Kotlin 的"内核通信" facade
 │       └── res/                # 45 种语言 + 双 UI 资源
+│                             #   values*/strings.xml      与上游逐字节一致
+│                             #   values*/fake_strings.xml fork 自己的字符串
 ├── .github/
-│   ├── workflows/ci.yml        # push / PR 自动构建
+│   ├── workflows/ci.yml        # 构建 + 上游分歧守卫 + 每周同步巡检
 │   └── workflows/release.yml   # 手动发布 → 提交 Releases 草稿
+├── tools/                      # 上游同步 / 分歧校验脚本
+│   └── upstream/               # allowlist.txt + upstream-ref.txt
+├── docs/upstream-sync.md       # 上游同步流程说明
 ├── gradle.properties           # KSU_PACKAGE_NAME / KSU_NAME 在此固化
 └── LICENSE                     # GPL-3.0（与上游非 kernel 部分一致）
 ```
@@ -247,7 +319,9 @@ FakeKernelSU/
 
 1. Fork 本仓库，从 `main` 切特性分支。
 2. **双 UI 约定**：任何新增 / 修改的页面，Material 与 Miuix 两套实现必须同步改，不允许只做一半。
-3. **翻译约定**：新增字符串至少补齐 `values/`（英文）与 `values-zh-rCN/`；其余 44 种语言由维护者用同样流程补齐，不要在 PR 里机翻全部语言。上游存量字符串跟随上游，不要随手改。
+3. **翻译约定**：新增字符串必须**一次补齐全部 46 个 locale**（`values/` 英文 + 45 种语言）。
+   用 `tools/apply-translations.ps1` 批量写入、`tools/report-missing-translations.ps1` 查漏，
+   漏翻会被 `tools/verify-divergence.ps1` 的规则 6 直接判红。上游存量字符串跟随上游，不要随手改。
 4. Commit 使用 [Conventional Commits](https://www.conventionalcommits.org/)（`feat:` / `fix:` / `refactor:` / `chore:` / `docs:`），一个 PR 只做一件事。
 5. PR 模板里的自测清单请逐项确认（双 UI 都看过、实验室开关测过、卸载语义测过）。
 6. CI（自动构建 + "无 native so"校验）必须通过；建议在 `main` 上开启分支保护要求状态检查。
@@ -295,7 +369,7 @@ FakeKernelSU 是娱乐 / 教学性质的界面模拟演示，与官方 KernelSU 
 - **Jailbreak mode**: a persistent demo mode (late-load semantics, lost on reboot) that appears on
   the home screen when not installed and SELinux is Permissive.
 - **Fake control panel ("lab")**: nearly everything on screen is configurable.
-- **4 launcher labels** via `activity-alias`; 45 languages; temporary vs. permanent uninstall.
+- **4 launcher labels** via `activity-alias`; 47 languages; temporary vs. permanent uninstall.
 
 ## Opening the lab (control panel)
 
@@ -363,9 +437,13 @@ with local files / SharedPreferences.**
 - **Rewritten** (same API surface, local data): `Natives.kt` as pure Kotlin (SharedPreferences +
   `profiles.json`), `KsuCli.kt` (local module JSON, synthetic flash logs), `SuperUserRepositoryImpl`
   (PackageManager), home state machine (`not installed = !ksuActive`, no GKI condition).
-- **Added**: `fake/` data layer, `fakepanel/` (both themes), simulated su-request dialogs,
-  `EditSystemInfoDialog`, `FakeBrand` / `FakeNames` / `FakeUnlock`, `AppCatalog`, and translations of
-  all fork-added strings into 45 languages.
+- **Added**: `fake/` data layer (plus `fake/repository/AppCatalog`), `fakepanel/` (both themes),
+  simulated su-request dialogs, `EditSystemInfoDialog`, `ui/fake/FakeBrand` / `FakeNames` / `FakeUnlock`,
+  and `res/values*/fake_strings.xml` holding the fork's own strings for 47 languages.
+- **Kept in sync with upstream**: `res/values*/strings.xml` is byte-identical to upstream, every
+  divergence from upstream is declared in `tools/upstream/allowlist.txt`, and
+  `tools/verify-divergence.ps1` (plus a weekly CI job) guards both. See
+  [`docs/upstream-sync.md`](docs/upstream-sync.md).
 - **Storage mapping**: `/data/adb/ksu` → `filesDir/adb/ksu`, `/data/adb/modules` → `filesDir/adb/modules`,
   kernel app profiles → `profiles.json`, ksud sulog → `sulog.log`.
 - **Known compromises**: no real root (module action scripts / WebUI are simulated), no ksud boot

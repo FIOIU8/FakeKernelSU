@@ -1,0 +1,93 @@
+# Upstream divergence allowlist
+#
+# Every upstream file that FakeKernelSU deliberately modifies (M) or removes
+# (D) must be listed here. tools/verify-divergence.ps1 fails the build when an
+# upstream file is changed or deleted without being listed here, which keeps
+# the fork's merge surface with tiann/KernelSU explicit and reviewable.
+#
+# Format:  <M|D>  <path>  #  <reason>
+#
+# The reference is upstream tiann/KernelSU, subtree "manager/". The fork's
+# repository root maps 1:1 onto that subtree, so the paths below are the
+# upstream paths.
+#
+# Rule of thumb for adding an entry:
+#   - prefer a fork-only file over an upstream edit; if you must edit an
+#     upstream file, keep the edit as small as possible.
+#   - if the edit is a generic improvement that upstream would accept, open
+#     an upstream PR and note the PR number in the reason.
+
+# --- build / toolchain -----------------------------------------------------
+M  build.gradle.kts  # build-tools pinned to 36.0.0 (the local SDK ships 35/36 only); revert once the toolchain catches up
+M  app/build.gradle.kts  # no native build: dropped CMake/NDK/prefab, the protobuf plugin and lsposed-cxx; the lsplugin-apksign plugin was replaced by plain Gradle signing properties that fall back to the debug certificate
+M  gradle.properties  # KSU_PACKAGE_NAME / KSU_NAME for the fork; dropped android.r8.maxWorkers and android.native.buildOutput (no native build)
+M  gradle/libs.versions.toml  # dropped the protobuf plugin used by upstream's update_metadata.proto
+M  settings.gradle.kts  # dropped the protobuf plugin and the type-safe project accessors preview; rootProject.name says FakeKernelSU instead of KernelSU
+M  gradlew  # executable bit only (100644 -> 100755)
+M  .gitignore  # fork-specific ignores
+
+# --- manifest --------------------------------------------------------------
+M  app/src/main/AndroidManifest.xml  # fksu:// deep-link scheme, launcher aliases, <queries> for package visibility; no native service / boot receiver / magica service
+
+# --- data layer ------------------------------------------------------------
+M  app/src/main/java/me/weishu/kernelsu/data/repository/SettingsRepositoryImpl.kt  # check_update defaults to false
+M  app/src/main/java/me/weishu/kernelsu/data/repository/SuperUserRepositoryImpl.kt  # reads the local fake data layer instead of the root interface
+M  app/src/main/java/me/weishu/kernelsu/Natives.kt  # fake Natives: no root, no kernel, no /proc
+M  app/src/main/java/me/weishu/kernelsu/KernelSUApplication.kt  # no native initialisation; okhttp client is created before the user-unlocked early return
+
+# --- ui: shared screens ----------------------------------------------------
+M  app/src/main/java/me/weishu/kernelsu/ui/MainActivity.kt  # routes to the fake control panel
+M  app/src/main/java/me/weishu/kernelsu/ui/navigation3/Routes.kt  # fake routes
+M  app/src/main/java/me/weishu/kernelsu/ui/navigation3/IntentDispatcher.kt  # fksu:// scheme
+M  app/src/main/java/me/weishu/kernelsu/ui/viewmodel/HomeViewModel.kt  # home data comes from the fake layer
+M  app/src/main/java/me/weishu/kernelsu/ui/component/rebootlistpopup/RebootListPopup.kt  # simulated reboot also purges pending module removals
+
+# --- ui: home --------------------------------------------------------------
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeScreen.kt  # fake home state
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeUiState.kt  # fake home state
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeUtils.kt  # fake version constants
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeMaterial.kt  # fake home state
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/home/HomeMiuix.kt  # fake home state
+
+# --- ui: install / settings / about / superuser ---------------------------
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashUtils.kt  # flashIt() is suspend so the simulated install log can be cancelled when the screen closes (one keyword; everything else is upstream)
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/install/InstallScreen.kt  # simulated install
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/install/InstallMaterial.kt  # simulated install
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/install/InstallMiuix.kt  # simulated install
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsScreen.kt  # fake settings entry
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsUiState.kt  # fake settings entry
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsMaterial.kt  # fake settings entry
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsMiuix.kt  # fake settings entry
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutScreen.kt  # fake about entries
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMaterial.kt  # fake about entries
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMiuix.kt  # fake about entries
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/superuser/SuperUserMaterial.kt  # simulated su request dialog
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/superuser/SuperUserMiuix.kt  # simulated su request dialog
+
+# --- ui: utilities ---------------------------------------------------------
+M  app/src/main/java/me/weishu/kernelsu/ui/util/KsuCli.kt  # forced non-root shell, scripts are replayed instead of executed, sepolicy is validated locally
+M  app/src/main/java/me/weishu/kernelsu/ui/util/LogEvent.kt  # bugreport packs only app-private data, pure Java tar+gzip, no shell
+M  app/src/main/java/me/weishu/kernelsu/ui/util/Downloader.kt  # update check points at the FakeKernelSU releases
+M  app/src/main/java/me/weishu/kernelsu/ui/util/SulogHelper.kt  # log directory resolved lazily
+M  app/src/main/java/me/weishu/kernelsu/ui/util/module/Shortcut.kt  # fksu:// scheme
+M  app/src/main/java/me/weishu/kernelsu/ui/util/BlurExt.kt  # BlurredBar gained a modifier parameter so the fork can compose it (generic enough for an upstream PR)
+M  app/src/main/java/me/weishu/kernelsu/ui/webui/WebViewInterface.kt  # exec/spawn replay their output instead of running the command
+M  app/src/main/java/me/weishu/kernelsu/ui/webui/WebViewHelper.kt  # keeps the ksu://icon/<pkg> content convention that module WebUI pages rely on
+
+# --- removed: native / root / kernel surface ------------------------------
+D  FakeKernelSU-改造方案.md  # upstream placeholder document, replaced by this fork's README
+D  app/src/main/aidl/me/weishu/kernelsu/IKsuInterface.aidl  # no AIDL interface: the fake build never talks to the kernel
+D  app/src/main/cpp/adbroot.cc  # no native code
+D  app/src/main/cpp/CMakeLists.txt  # no native code
+D  app/src/main/cpp/jni.cc  # no native code
+D  app/src/main/cpp/ksu.cc  # no native code
+D  app/src/main/cpp/ksu.h  # no native code
+D  app/src/main/cpp/logging.h  # no native code
+D  app/src/main/java/me/weishu/kernelsu/core/tasks/ExtractImage.kt  # image extraction needs a real root
+D  app/src/main/java/me/weishu/kernelsu/core/tasks/Payload.kt  # flashing a payload needs a real root
+D  app/src/main/java/me/weishu/kernelsu/magica/AppZygotePreload.java  # the Magisk-compatible service needs a real root
+D  app/src/main/java/me/weishu/kernelsu/magica/BootCompletedReceiver.java  # the Magisk-compatible service needs a real root
+D  app/src/main/java/me/weishu/kernelsu/magica/MagicaService.java  # the Magisk-compatible service needs a real root
+D  app/src/main/java/me/weishu/kernelsu/ui/KsuService.kt  # the service is backed by the native interface
+D  app/src/main/jniLibs/.gitignore  # no jniLibs
+D  app/src/main/proto/update_metadata.proto  # no protobuf: the fake build does not fetch update metadata
