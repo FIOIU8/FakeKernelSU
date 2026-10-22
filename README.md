@@ -148,7 +148,7 @@ keytool -genkeypair -alias fakekernelsu -keyalg RSA -keysize 2048 \
   -dname "CN=FakeKernelSU, OU=Release, O=FIOIU8, C=CN"
 ```
 
-CI 的 Release 工作流支持配置仓库密钥 `KEYSTORE_BASE64`（jks 文件的 base64，`base64 -w0 release.jks`）+ `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`，配了就用正式证书，没配就用 debug 证书。
+CI 的 Release 工作流**强制要求**这 4 个仓库密钥：`KEYSTORE_BASE64`（jks 文件的 base64，`base64 -w0 release.jks`）+ `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`。缺失任何一项都会在创建 tag 之前直接失败——debug 签名的包永远无法被正式签名的包覆盖更新，不允许混入正式发布。本地 `assembleRelease` 不带密钥时仍回退 debug 签名，方便日常构建。
 
 ---
 
@@ -341,9 +341,12 @@ seccomp), naming (brand, in-app name, launcher label), hide entry, danger zone (
   `gradle.properties`: `com.fake.kernelsu` / `FakeKernelSU`).
 - **Versioning depends on git**: `versionCode = 30000 + commit count`, `versionName = git describe`.
   A full clone with tags is required (CI uses `fetch-depth: 0`).
-- Optional release signing: pass `KEYSTORE_FILE` / `KEYSTORE_PASSWORD` / `KEY_ALIAS` /
-  `KEY_PASSWORD` Gradle properties, or configure the repo secrets `KEYSTORE_BASE64` +
-  `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD` for the Release workflow.
+- Release signing is MANDATORY for the Release workflow: configure the repo
+  secrets `KEYSTORE_BASE64` + `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`,
+  or the workflow fails before creating anything (no tag, no draft). A
+  debug-signed APK could never be updated in place by a properly signed one.
+  Local `assembleRelease` without a keystore still falls back to debug signing
+  for everyday builds.
 - Generate the keystore once and back it up forever (losing it means you can never
   update published releases):
   `keytool -genkeypair -alias fakekernelsu -keyalg RSA -keysize 2048 -validity 10000 -keystore release.jks -dname "CN=FakeKernelSU, OU=Release, O=FIOIU8, C=CN"`
