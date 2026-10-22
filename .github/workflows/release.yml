@@ -3,6 +3,8 @@ name: Release
 # Manual only: cutting a release is a deliberate act. The workflow builds a
 # release APK, pushes a semver tag (if missing) and submits a DRAFT GitHub
 # Release. Nothing becomes public until a human publishes the draft.
+# Release APKs are ALWAYS signed with the official certificate - the workflow
+# fails fast when the signing secrets are missing (see the guard step below).
 on:
   workflow_dispatch:
     inputs:
@@ -43,6 +45,32 @@ jobs:
         run: |
           echo "::error::Releases can only be cut from the default branch (${{ github.event.repository.default_branch }}), current ref is ${{ github.ref_name }}."
           exit 1
+
+      # Releases MUST be signed with the official certificate: a debug-signed
+      # APK can never be updated in place by a properly signed one, so refuse
+      # to cut a release without the secrets - and do it BEFORE anything is
+      # created (no tag, no draft release).
+      - name: Require signing secrets
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -z "$KEYSTORE_BASE64" ]   && missing="$missing KEYSTORE_BASE64"
+          [ -z "$KEYSTORE_PASSWORD" ] && missing="$missing KEYSTORE_PASSWORD"
+          [ -z "$KEY_ALIAS" ]         && missing="$missing KEY_ALIAS"
+          [ -z "$KEY_PASSWORD" ]      && missing="$missing KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing"
+            echo "::error::Release builds are always signed with the official certificate."
+            echo "::error::Add them under Settings > Secrets and variables > Actions (README section 5)."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
 
       # Create (or reuse) the semver tag BEFORE building, so that
       # `git describe` inside Gradle yields a clean version name.
@@ -88,22 +116,22 @@ jobs:
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager "platforms;android-${COMPILE_SDK}.${MINOR}" "build-tools;${BUILD_TOOLS}"
 
-      # Optional release signing. Configure the repository secrets below to
-      # sign with a real certificate; without them the APK is signed with the
-      # debug certificate (app/build.gradle.kts falls back automatically).
-      #   KEYSTORE_BASE64  - base64 of the .jks/.keystore file
-      #   KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
-      - name: Decode keystore (optional)
-        id: keystore
+      # The guard step already failed on missing secrets; here verify that the
+      # decoded keystore really contains the alias - this catches wrong
+      # passwords and corrupted base64 before the multi-minute build.
+      - name: Verify keystore
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        # NOTE: the `secrets` context is not allowed in step-level `if`
-        # expressions on GitHub Actions ("Unrecognized named-value"), so the
-        # emptiness check goes through the `env` mapping above.
-        if: env.KEYSTORE_BASE64 != ''
+          KEYSTORE_FILE: ${{ steps.keystore.outputs.file }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-          echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+          keytool -list -keystore "$KEYSTORE_FILE" \
+            -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" \
+            | grep -q "PrivateKeyEntry" || {
+            echo "::error::Keystore does not contain alias '$KEY_ALIAS', or the store password is wrong."
+            exit 1
+          }
+          echo "Keystore OK, alias '$KEY_ALIAS' found."
 
       - name: Build release APK
         env:
@@ -112,14 +140,12 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ARGS=""
-          if [ -n "${KEYSTORE_FILE:-}" ]; then
-            ARGS="-PKEYSTORE_FILE=$KEYSTORE_FILE -PKEYSTORE_PASSWORD=$KEYSTORE_PASSWORD -PKEY_ALIAS=$KEY_ALIAS -PKEY_PASSWORD=$KEY_PASSWORD"
-            echo "Building with release keystore."
-          else
-            echo "No keystore secret configured, release APK will be debug-signed."
-          fi
-          ./gradlew assembleRelease --no-daemon $ARGS
+          echo "Building release APK signed with alias '$KEY_ALIAS'."
+          ./gradlew assembleRelease --no-daemon \
+            -PKEYSTORE_FILE="$KEYSTORE_FILE" \
+            -PKEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PKEY_ALIAS="$KEY_ALIAS" \
+            -PKEY_PASSWORD="$KEY_PASSWORD"
 
       - name: Collect APK and checksum
         id: apk
