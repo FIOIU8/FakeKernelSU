@@ -19,6 +19,12 @@
 #
 # Format:  <key>  <sha>  <iso-date>  <note>
 
-baseline  1f70e46f50887aea7923bea2d53d5aa60a83f9e8  2026-10-20  fork import of upstream tiann/KernelSU main (tree == upstream manager/ subtree)
+baseline  b2c280ef48aa2cb0c057fb8bbd0458d604bbfa49  2026-10-20  fork import of upstream tiann/KernelSU main (tree == upstream manager/ subtree)
 upstream  4663610011d03771a64e7c36a2aa65bd1794022d  2026-10-20  upstream commit the import was taken from ("manager: remove DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION (#3927)")
-lineage   07c335dc273809a510fd28fe937568a919d47f79  2026-10-22  merge commit that records 4663610 as the import's upstream parent (tree unchanged)
+lineage   65dc488f6405cc1e56da84eca4f70161bd4e5533  2026-10-22  merge commit that records 4663610 as the import's upstream parent (tree unchanged)
+
+# NOTE (2026-10-24): the fork's own commits were re-authored to FIOIU8, so
+# baseline/lineage are the post-rewrite SHAs. Upstream commits keep their
+# original SHAs and the lineage commit still merges the original 4663610,
+# so the merge base with tiann/KernelSU is intact -- do not "fix" these two
+# values back to the pre-rewrite ones.
