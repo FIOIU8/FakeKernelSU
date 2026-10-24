@@ -1,6 +1,7 @@
 package me.weishu.kernelsu.fake
 
 import java.io.File
+import java.io.InputStream
 import java.util.zip.ZipFile
 
 /**
@@ -92,14 +93,12 @@ object ModuleZip {
                 onStderr("! Too many entries in the archive")
                 return Result.Rejected("The archive contains more than ${limits.entryCount} entries")
             }
+            // The declared size is only a cheap early reject: it comes from the
+            // archive's own central directory, so a crafted zip can understate
+            // it. The authoritative check is the byte count in [copyBounded].
             if (entry.size > limits.entrySize) {
                 onStderr("! ${entry.name} is larger than ${human(limits.entrySize)}")
                 return Result.Rejected("An entry is larger than the ${human(limits.entrySize)} limit")
-            }
-            total += entry.size
-            if (total > limits.totalSize) {
-                onStderr("! The archive expands to more than ${human(limits.totalSize)}")
-                return Result.Rejected("The archive expands to more than ${human(limits.totalSize)}")
             }
 
             val file = resolveInside(target, entry.name)
@@ -108,12 +107,61 @@ object ModuleZip {
                 continue
             }
             file.parentFile?.mkdirs()
-            archive.getInputStream(entry).use { inStream ->
-                file.outputStream().use { out -> inStream.copyTo(out) }
+            val copied = archive.getInputStream(entry).use { inStream ->
+                copyBounded(inStream, file, limits.entrySize, limits.totalSize - total)
+            }
+            when (copied) {
+                is CopyResult.EntryTooLarge -> {
+                    file.delete()
+                    onStderr("! ${entry.name} is larger than ${human(limits.entrySize)}")
+                    return Result.Rejected("An entry is larger than the ${human(limits.entrySize)} limit")
+                }
+
+                is CopyResult.TotalTooLarge -> {
+                    file.delete()
+                    onStderr("! The archive expands to more than ${human(limits.totalSize)}")
+                    return Result.Rejected("The archive expands to more than ${human(limits.totalSize)}")
+                }
+
+                is CopyResult.Ok -> total += copied.bytes
             }
             if (entry.name == "module.prop") onStdout("- Wrote module.prop")
         }
         return Result.Ok
+    }
+
+    private sealed class CopyResult {
+        data class Ok(val bytes: Long) : CopyResult()
+        data object EntryTooLarge : CopyResult()
+        data object TotalTooLarge : CopyResult()
+    }
+
+    /**
+     * Streams [input] into [target], counting the bytes that actually arrive.
+     *
+     * Returns [CopyResult.EntryTooLarge] / [CopyResult.TotalTooLarge] as soon as
+     * a limit is crossed, leaving a partially written file behind that the
+     * caller deletes.
+     */
+    private fun copyBounded(
+        input: InputStream,
+        target: File,
+        entryLimit: Long,
+        totalBudget: Long,
+    ): CopyResult {
+        var written = 0L
+        val buffer = ByteArray(64 * 1024)
+        target.outputStream().use { out ->
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                written += read
+                if (written > entryLimit) return CopyResult.EntryTooLarge
+                if (written > totalBudget) return CopyResult.TotalTooLarge
+                out.write(buffer, 0, read)
+            }
+        }
+        return CopyResult.Ok(written)
     }
 
     /**

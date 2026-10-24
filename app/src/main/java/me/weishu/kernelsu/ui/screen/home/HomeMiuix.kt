@@ -247,21 +247,26 @@ private fun TopBar(
                 },
                 scrollBehavior = scrollBehavior
             )
-            // Miuix's TopAppBar takes a plain String title and its own bar
-            // gestures eat taps, so the unlock gesture lives on a transparent
-            // hot zone over the title area instead. Fixed size on purpose:
-            // the top bar is measured with an unbounded height, so
-            // fillMaxHeight would collapse to zero there.
+            // Same scope as the material variant, where the gesture lives on the
+            // title text: nothing but the title area reacts, the action icons stay
+            // untouched. Miuix's TopAppBar takes a plain String title (no
+            // composable slot) and swallows the press in its own detector, so the
+            // closest equivalent is a transparent hotspot over the title area —
+            // everything left of the action icons. matchParentSize keeps it glued
+            // to the bar's measured size in both the collapsed and expanded state.
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp)
-                    .size(width = 220.dp, height = 56.dp)
+                    .matchParentSize()
+                    .padding(end = ActionIconsZone)
                     .then(unlockModifier)
             )
         }
     }
 }
+
+// IconButton min width (40.dp) + the bar's action icon end padding (16.dp), plus
+// a little slack so the reboot button is never covered by the unlock hotspot.
+private val ActionIconsZone = 64.dp
 
 @Composable
 private fun StatusCard(

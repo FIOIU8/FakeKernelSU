@@ -132,17 +132,51 @@ object FakeModules {
                 onStdout("- Module id: $id")
                 onStdout("- Extracting to ${FakeState.modulesDir.absolutePath}/$id")
 
-                // Everything is validated before the first byte is written, so
-                // a rejected zip does not leave a half-extracted module behind.
+                // Extract into a staging directory first: a rejected zip must
+                // not be able to destroy the working copy of a module that is
+                // already installed under the same id. The staging and backup
+                // directories live in cacheDir on purpose - a dot-prefixed dir
+                // inside modules/ would still be listed by [listJson], because
+                // that reads whatever module.prop it finds.
                 val target = File(FakeState.modulesDir, id)
-                val extracted = ModuleZip.extract(archive, target, LIMITS, onStdout, onStderr)
+                val staging = File(ksuApp.cacheDir, "module-stage-$id")
+                val backup = File(ksuApp.cacheDir, "module-backup-$id")
+                runCatching { staging.deleteRecursively() }
+                runCatching { backup.deleteRecursively() }
+
+                val extracted = ModuleZip.extract(archive, staging, LIMITS, onStdout, onStderr)
                 if (extracted is ModuleZip.Result.Rejected) {
-                    runCatching { target.deleteRecursively() }
+                    runCatching { staging.deleteRecursively() }
                     return FlashResult(1, extracted.reason, false)
                 }
 
                 // keep the original zip for reference / re-install
-                cache.copyTo(File(target, "module.zip"), overwrite = true)
+                cache.copyTo(File(staging, "module.zip"), overwrite = true)
+
+                // Swap the staged copy in. The old version is parked in
+                // cacheDir until the new one is in place, so a failed move
+                // leaves the previous install untouched.
+                val hadPrevious = target.exists()
+                if (hadPrevious && !target.renameTo(backup)) {
+                    runCatching { staging.deleteRecursively() }
+                    return FlashResult(1, "Cannot replace the installed version of $id", false)
+                }
+                if (!staging.renameTo(target)) {
+                    // Cross-directory rename can fail on some volumes; copy
+                    // instead and clean the staging directory afterwards.
+                    val moved = runCatching {
+                        staging.copyRecursively(target, overwrite = true)
+                        staging.deleteRecursively()
+                        true
+                    }.getOrDefault(false)
+                    if (!moved) {
+                        if (hadPrevious) runCatching { backup.renameTo(target) }
+                        runCatching { staging.deleteRecursively() }
+                        return FlashResult(1, "Cannot write the module into ${target.absolutePath}", false)
+                    }
+                }
+                runCatching { backup.deleteRecursively() }
+
                 onStdout("- Module installed")
             }
             return FlashResult(0, "", false)

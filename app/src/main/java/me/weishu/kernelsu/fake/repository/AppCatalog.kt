@@ -12,17 +12,20 @@ import me.weishu.kernelsu.ksuApp
  *
  * Upstream the superuser page enumerates processes through a root AIDL service
  * while other pickers use the PackageManager, so the two never line up. The
- * fake manager has no root channel, so both entries go through here instead —
+ * fake manager has no root channel, so both entries go through here instead -
  * that way the picker can only ever show a superset of what the superuser page
  * can show (#8).
  *
- * Note: "has a launcher icon" belongs to [launchable] only. Filtering on it in
- * [packages] would drop code-bearing apps without a launcher (widgets, background
- * services, some system packages) from the superuser list.
+ * What the PackageManager returns is bounded by `AndroidManifest.xml`'s
+ * `<queries>`: on API 30+ only packages visible through it are enumerated, and
+ * the fork declares the LAUNCHER intent filter only (a demo should not ask for
+ * QUERY_ALL_PACKAGES). So in practice [packages] and [launchable] cover the
+ * same set today; the extra filter in [launchable] stays so the two do not
+ * silently diverge if `<queries>` is widened later.
  */
 object AppCatalog {
 
-    /** Every installed package, one entry per package name, sorted by label. */
+    /** Every package the manifest's `<queries>` makes visible, one per name, sorted by label. */
     suspend fun packages(): List<PackageInfo> = withContext(Dispatchers.IO) {
         val pm = ksuApp.packageManager
         pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)

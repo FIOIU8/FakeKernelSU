@@ -27,12 +27,15 @@ import me.weishu.kernelsu.ui.screen.flash.FlashIt
 import me.weishu.kernelsu.ui.screen.scriptrun.ScriptRunArg
 import me.weishu.kernelsu.ui.util.DownloadService
 import me.weishu.kernelsu.ui.util.getFileName
+import me.weishu.kernelsu.ui.util.module.Shortcut
 import me.weishu.kernelsu.ui.webui.WebUIActivity
 
 // FakeKernelSU does not claim the official "ksu://" scheme: on a device that
 // has both this app and the real manager installed, every "ksu://" link would
 // become ambiguous. The links stay token protected either way.
-private const val SCHEME_KSU = "fksu"
+// One constant, shared with the shortcut builder, so the scheme the app
+// *answers* on and the scheme it *emits* can never drift apart.
+private const val SCHEME_KSU = Shortcut.SCHEME_KSU
 private const val HOST_ACTION = "action"
 private const val HOST_WEBUI = "webui"
 private const val PARAM_ID = "id"

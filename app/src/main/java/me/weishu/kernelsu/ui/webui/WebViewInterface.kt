@@ -11,17 +11,11 @@ import android.widget.Toast
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.topjohnwu.superuser.CallbackList
-import com.topjohnwu.superuser.ShellUtils
-import com.topjohnwu.superuser.internal.UiThreadHandler
-import me.weishu.kernelsu.ui.util.createRootShell
 import me.weishu.kernelsu.ui.util.listModules
-import me.weishu.kernelsu.ui.util.withNewRootShell
 import me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.util.concurrent.CompletableFuture
 
 class WebViewInterface(private val state: WebUIState) {
     private val webView get() = state.webView

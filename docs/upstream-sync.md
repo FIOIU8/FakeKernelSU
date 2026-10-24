@@ -40,7 +40,7 @@ FakeKernelSU 是 [tiann/KernelSU](https://github.com/tiann/KernelSU) 的 `manage
 资源，aapt2 会报 duplicate resource 直接构建失败。这个风险由
 `tools/verify-divergence.ps1` 的规则 5 提前拦住（见 §3）。
 
-### 1.2 为什么要给 fork 的资源名加 `fake_` 前缀
+### 1.2 为什么 fork 的资源名要加 `fake_` 前缀
 
 fork 原本有 6 条资源没带前缀：`launcher_label_{fake,ksu,manager,short}` 和
 `home_edit_{summary,hint}`。它们放在 fork 专属文件里，本身不会冲突；但如果上游日后用了
@@ -48,7 +48,18 @@ fork 原本有 6 条资源没带前缀：`launcher_label_{fake,ksu,manager,short
 
 统一改成 `fake_launcher_label_*` / `fake_home_edit_*` 之后，规则变成机械可校验的：
 
-> `fake_strings.xml` 里的名字必须以 `fake_` 开头；上游永远不可能撞上。
+> `fake_strings.xml` 里只允许两类名字：
+>
+> 1. **fork 自有**：`fake_` 开头，且上游任何 locale 都没有同名资源；
+> 2. **替上游补翻译**：名字与上游默认 locale（`values/strings.xml`）里的某条**完全一致**，
+>    且当前 locale 的 `strings.xml` 里**还没有**它。
+>
+> 第 2 类是允许的，因为 fork 顺手补齐了上游缺失的翻译（如 `script_*`、`module_preinit_*`）；
+> 它同时也是定时炸弹——上游哪天把这条翻进同一 locale，这里就重复了。所以守卫规则 5
+> 会在上游提供该翻译时立刻报错，要求删掉 fork 那份（见 §3.2）。
+
+除这两类之外的名字（既没 `fake_` 前缀、上游也没有）会被规则 8 直接判红。
+**新增 fork 字符串时永远用第 1 类。**
 
 ---
 
@@ -94,6 +105,10 @@ fork 原本有 6 条资源没带前缀：`launcher_label_{fake,ksu,manager,short
 7. `upstream-ref.txt` 里记的 `lineage` 提交必须存在、有两个父、且仍在 `HEAD` 的祖先链上。
    丢了它，`git merge -X subtree=manager` 会悄悄退回文件级覆盖（正是嫁接前的处境）。
    这条不需要网络，纯本地检查。
+8. `fake_strings.xml` 里的每个名字，要么是 `fake_` 前缀的 fork 自有资源（上游任何 locale 都不能有），
+   要么是「上游默认 locale 有、而本 locale 还没有」的上游翻译补充（见 §1.2）。
+9. 有 `strings.xml` 的 locale 必须有 `fake_strings.xml`。`sync-upstream.ps1` 随时可能带进
+   一个上游新 locale，缺这个文件就意味着那个语言下 fork 的字符串全部退回英文。
 
 **同步漂移（默认警告，`-SyncRequired` 时失败）**
 
@@ -251,7 +266,7 @@ FAIL  values-de: 'fake_xxx' uses the fake_ prefix but upstream also defines it
 
 | Job | 触发 | 作用 |
 |---|---|---|
-| `upstream-divergence` | 每次 push / PR | 跑严格规则 1-7（含 lineage 完整性），改坏了就红 |
+| `upstream-divergence` | 每次 push / PR | 跑严格规则 1-9（含 lineage 完整性与 locale 覆盖），改坏了就红 |
 | `upstream-sync-check` | 每周一 + 手动 | 拉上游**完整历史**，看漂移，漂移就红；另外用 `git merge --no-commit -X subtree=manager` 预演一次合并，有冲突只打 warning（冲突多半落在 allowlist 文件上，属预期） |
 | `build` | 每次 push / PR | 构建 debug/release APK、跑单测、检查 APK 里没有 `.so` |
 

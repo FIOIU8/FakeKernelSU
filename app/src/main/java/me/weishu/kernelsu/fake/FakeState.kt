@@ -104,6 +104,7 @@ object FakeState {
     private val installedAtState = mutableStateOf(0L)
     private val stateOverrideState = mutableStateOf(FakeInstallState.AUTO)
     private val rootAvailableState = mutableStateOf(true)
+    private val suEnabledState = mutableStateOf(true)
     private val ksuVersionState = mutableStateOf(DEFAULT_KSU_VERSION)
     private val lkmModeState = mutableStateOf<Boolean?>(null)
     private val kernelUapiVersionState = mutableStateOf(DEFAULT_KERNEL_UAPI_VERSION)
@@ -140,6 +141,7 @@ object FakeState {
         installedAtState.value = prefs.getLong(KEY_INSTALLED_AT, 0L)
         stateOverrideState.value = FakeInstallState.fromName(prefs.getString(KEY_STATE_OVERRIDE, null))
         rootAvailableState.value = prefs.getBoolean(KEY_ROOT_AVAILABLE, true)
+        suEnabledState.value = prefs.getBoolean(KEY_SU_ENABLED, true)
         ksuVersionState.value = prefs.getInt(KEY_KSU_VERSION, DEFAULT_KSU_VERSION)
         lkmModeState.value = when (prefs.getString(KEY_LKM_MODE, "gki")) {
             "lkm" -> true
@@ -215,6 +217,28 @@ object FakeState {
             ensureLoaded()
             rootAvailableState.value = value
             prefs.edit().putBoolean(KEY_ROOT_AVAILABLE, value).apply()
+        }
+
+    /**
+     * The `su` compat switch (`ksud feature su_compat`, surfaced as
+     * [me.weishu.kernelsu.Natives.isSuEnabled]).
+     *
+     * Deliberately a separate flag from [rootAvailable]: upstream, "su is
+     * enabled" is a kernel-side temporary switch while `shell.isRoot` answers
+     * "do we have root at all". Sharing one value meant flipping the su mode
+     * in Settings also flipped [me.weishu.kernelsu.ui.util.rootAvailable],
+     * which drives `Natives.isFullFeatured()` and therefore the bottom bar,
+     * the pager gestures and the startup preload.
+     */
+    var suEnabled: Boolean
+        get() {
+            ensureLoaded()
+            return suEnabledState.value
+        }
+        set(value) {
+            ensureLoaded()
+            suEnabledState.value = value
+            prefs.edit().putBoolean(KEY_SU_ENABLED, value).apply()
         }
 
     var ksuVersion: Int
@@ -494,6 +518,10 @@ object FakeState {
      */
     fun applyJailbreak() {
         if (!installed) performFakeInstall()
+        // The control panel may have pinned the display state to NOT_INSTALLED
+        // / UNSUPPORTED; jailbreak implies a running (LKM) install, so drop the
+        // override instead of leaving the home page on "not installed".
+        stateOverride = FakeInstallState.AUTO
         lkmMode = true
         jailbreakMode = true
         FakeSu.logLateLoad()
@@ -525,6 +553,7 @@ object FakeState {
         installedAtState.value = 0L
         stateOverrideState.value = FakeInstallState.AUTO
         rootAvailableState.value = true
+        suEnabledState.value = true
         ksuVersionState.value = DEFAULT_KSU_VERSION
         lkmModeState.value = null
         kernelUapiVersionState.value = DEFAULT_KERNEL_UAPI_VERSION
@@ -554,6 +583,7 @@ object FakeState {
     private const val KEY_INSTALLED_AT = "installed_at"
     private const val KEY_STATE_OVERRIDE = "state_override"
     private const val KEY_ROOT_AVAILABLE = "root_available"
+    private const val KEY_SU_ENABLED = "su_enabled"
     private const val KEY_KSU_VERSION = "ksu_version"
     private const val KEY_LKM_MODE = "lkm_mode"
     private const val KEY_JAILBREAK_MODE = "jailbreak_mode"

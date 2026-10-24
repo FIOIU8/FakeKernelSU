@@ -35,6 +35,14 @@
        exists, still merges the fork with the upstream import source, and is
        still an ancestor of HEAD. Losing it silently turns "git merge
        -X subtree=manager upstream/main" back into a file-by-file overwrite.
+    8. Every fake_strings.xml name is either "fake_"-prefixed (fork-owned) or
+       the name of an upstream string that this locale does not translate yet
+       (the fork paying down upstream's translation debt). Any other name is a
+       fork-owned string that skipped the prefix rule and would collide with
+       upstream sooner or later.
+    9. Every locale that has a strings.xml also has a fake_strings.xml, so a
+       locale brought in by tools/sync-upstream.ps1 cannot silently fall back
+       to English for the fork's strings.
 
   SYNC DRIFT - reported against the sync reference
     * files the fork still has that upstream no longer has
@@ -307,20 +315,34 @@ $locales = Get-ChildItem -Path $resRoot -Directory -Filter 'values*' |
     Where-Object { Test-Path (Join-Path $_.FullName 'strings.xml') } | Sort-Object Name
 
 $outOfSync = 0
+$missingFakeFiles = 0
+$upstreamNamed = 0
 foreach ($d in $locales) {
     $rel = "app/src/main/res/$($d.Name)/strings.xml"
     $upText = Get-UpstreamText $sync.Sha ($sync.Prefix + $rel)
     $localText = Get-LocalText (Join-Path $d.FullName 'strings.xml')
     if (-not $upText) { continue }
+
+    # Drift is reported, but it must not skip the resource rules below: the
+    # configuration that gets built is the local one, so a fork string that
+    # collides there breaks the build whether or not the locale is up to date.
     if ($localText -ne $upText) {
         $outOfSync++
         $msg = "$($d.Name)/strings.xml differs from upstream - run tools/sync-upstream.ps1"
         if ($SyncRequired) { [void]$failures.Add($msg) } else { [void]$warnings.Add($msg) }
-        continue
     }
 
     $fakePath = Join-Path $d.FullName 'fake_strings.xml'
-    if (-not (Test-Path $fakePath)) { continue }
+    if (-not (Test-Path $fakePath)) {
+        # A locale without the fork's file silently falls back to English for
+        # every fork string. sync-upstream.ps1 can bring in a new upstream
+        # locale at any time, so this is checked instead of assumed.
+        if ($d.Name -ne 'values') {
+            $missingFakeFiles++
+            [void]$failures.Add("$($d.Name) has strings.xml but no fake_strings.xml - add translations or drop the locale")
+        }
+        continue
+    }
     $fakeText = Get-LocalText $fakePath
     $localNames = @(Get-Names $localText)
     $fakeNames = @(Get-Names $fakeText)
@@ -340,11 +362,23 @@ foreach ($d in $locales) {
             [void]$failures.Add("$($d.Name): '$n' uses the fake_ prefix but upstream also defines it")
         }
     }
+    # rule 8: a name without the fake_ prefix may only exist here as a
+    # translation of an upstream string this locale does not have yet. Anything
+    # else is a fork-owned name that skipped the prefix rule.
+    foreach ($n in @($fakeNames | Where-Object { -not $_.StartsWith('fake_') })) {
+        if (-not $upstreamGlobal.Contains($n)) {
+            [void]$failures.Add("$($d.Name): '$n' is neither fake_-prefixed nor an upstream string - rename it to fake_$n")
+        } elseif (-not ($upNames -contains $n)) {
+            $upstreamNamed++
+        }
+    }
 }
 
 Write-Host ("  locales checked         : {0}" -f $locales.Count)
 Write-Host ("  upstream resource names  : {0}" -f $upstreamGlobal.Count)
 Write-Host ("  locales out of sync      : {0}" -f $outOfSync)
+Write-Host ("  locales missing fake file: {0}" -f $missingFakeFiles)
+Write-Host ("  upstream-string translations owned by the fork: {0}" -f $upstreamNamed)
 
 # --------------------------------------------------------------------------
 # strict rule 6: every fork string is actually translated everywhere

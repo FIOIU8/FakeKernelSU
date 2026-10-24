@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -189,7 +190,19 @@ private fun TopBar(
 ) {
     val unlockModifier = rememberFakeUnlockModifier(onUnlockPanel)
     LargeFlexibleTopAppBar(
-        title = { Text(fakeAppName(), modifier = Modifier.then(unlockModifier)) },
+        // The title slot is already clipped to the space between the navigation
+        // and action icons, so filling it makes the whole title line react to
+        // the long press instead of only the glyphs. Same target for the
+        // collapsed and the expanded row (material composes this slot twice).
+        title = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(unlockModifier)
+            ) {
+                Text(fakeAppName())
+            }
+        },
         actions = { RebootListPopup() },
         colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),

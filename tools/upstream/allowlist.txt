@@ -27,11 +27,11 @@ M  gradlew  # executable bit only (100644 -> 100755)
 M  .gitignore  # fork-specific ignores
 
 # --- manifest --------------------------------------------------------------
-M  app/src/main/AndroidManifest.xml  # fksu:// deep-link scheme, launcher aliases, <queries> for package visibility; no native service / boot receiver / magica service
+M  app/src/main/AndroidManifest.xml  # fksu:// deep-link scheme, launcher aliases, <queries> for package visibility; no native service / boot receiver / magica service / directBootAware (the components that needed it are gone and the fake data layer lives in CE storage)
 
 # --- data layer ------------------------------------------------------------
-M  app/src/main/java/me/weishu/kernelsu/data/repository/SettingsRepositoryImpl.kt  # check_update defaults to false
-M  app/src/main/java/me/weishu/kernelsu/data/repository/SuperUserRepositoryImpl.kt  # reads the local fake data layer instead of the root interface
+M  app/src/main/java/me/weishu/kernelsu/data/repository/SettingsRepositoryImpl.kt  # check_update defaults to false; setAdbRootEnabled no longer restarts adbd through libsu's root-capable default shell (the fake build must never run a system command as root)
+M  app/src/main/java/me/weishu/kernelsu/data/repository/SuperUserRepositoryImpl.kt  # reads the local fake data layer instead of the root interface; the user id list is derived from the enumerated uids
 M  app/src/main/java/me/weishu/kernelsu/Natives.kt  # fake Natives: no root, no kernel, no /proc
 M  app/src/main/java/me/weishu/kernelsu/KernelSUApplication.kt  # no native initialisation; okhttp client is created before the user-unlocked early return
 
@@ -59,14 +59,15 @@ M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsUiState.kt  #
 M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsMaterial.kt  # fake settings entry
 M  app/src/main/java/me/weishu/kernelsu/ui/screen/settings/SettingsMiuix.kt  # fake settings entry
 M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutScreen.kt  # fake about entries
-M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMaterial.kt  # fake about entries
-M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMiuix.kt  # fake about entries
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMaterial.kt  # brand name in the body, stealth long-press on the (unchanged) "About" title
+M  app/src/main/java/me/weishu/kernelsu/ui/screen/about/AboutMiuix.kt  # brand name in the body, stealth long-press on the (unchanged) "About" title
 M  app/src/main/java/me/weishu/kernelsu/ui/screen/superuser/SuperUserMaterial.kt  # simulated su request dialog
 M  app/src/main/java/me/weishu/kernelsu/ui/screen/superuser/SuperUserMiuix.kt  # simulated su request dialog
 
 # --- ui: utilities ---------------------------------------------------------
-M  app/src/main/java/me/weishu/kernelsu/ui/util/KsuCli.kt  # forced non-root shell, scripts are replayed instead of executed, sepolicy is validated locally
+M  app/src/main/java/me/weishu/kernelsu/ui/util/KsuCli.kt  # forced non-root shell, scripts are replayed instead of executed, sepolicy is validated locally (an empty rule set is valid, like upstream's null check)
 M  app/src/main/java/me/weishu/kernelsu/ui/util/LogEvent.kt  # bugreport packs only app-private data, pure Java tar+gzip, no shell
+M  app/src/main/java/me/weishu/kernelsu/ui/util/SELinuxChecker.kt  # FLAG_NON_ROOT_SHELL: the default libsu builder tries `su` first, which would hand this demo a root shell just to run getenforce
 M  app/src/main/java/me/weishu/kernelsu/ui/util/Downloader.kt  # update check points at the FakeKernelSU releases
 M  app/src/main/java/me/weishu/kernelsu/ui/util/SulogHelper.kt  # log directory resolved lazily
 M  app/src/main/java/me/weishu/kernelsu/ui/util/module/Shortcut.kt  # fksu:// scheme

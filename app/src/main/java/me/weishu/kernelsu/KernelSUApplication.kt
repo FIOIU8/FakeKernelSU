@@ -44,10 +44,13 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
         super.onCreate()
         ksuApp = this
 
-        // The HTTP client is set up before the "user locked" early return:
-        // the app is directBootAware, so the process can start before the
-        // user unlocks. Leaving `okhttpClient` uninitialized in that case
-        // turned every later use into an UninitializedPropertyAccessException.
+        // The manifest no longer marks the application directBootAware (the
+        // components that needed it are gone), but the guard stays: it is the
+        // only thing standing between a pre-unlock start and the data layer's
+        // credential-encrypted SharedPreferences.
+        // The HTTP client is therefore built first - leaving `okhttpClient`
+        // uninitialized on the early return would turn every later use into an
+        // UninitializedPropertyAccessException.
         okhttpClient =
             OkHttpClient.Builder().cache(Cache(File(cacheDir, "okhttp"), 10 * 1024 * 1024))
                 .addInterceptor { block ->

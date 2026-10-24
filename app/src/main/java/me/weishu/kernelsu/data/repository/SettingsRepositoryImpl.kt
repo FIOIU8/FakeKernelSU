@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.core.content.edit
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.topjohnwu.superuser.ShellUtils
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.ksuApp
 import me.weishu.kernelsu.ui.UiMode
@@ -208,13 +207,15 @@ class SettingsRepositoryImpl : SettingsRepository {
 
     override suspend fun getAdbRootValue(): Long? = getFeatureValue("adb_root")
 
+    /**
+     * FakeKernelSU: upstream restarts adbd here (`setprop ctl.restart adbd`)
+     * through libsu's *default* shell, which tries `su` first - on a rooted
+     * device that hands this demo a root shell and lets it touch a system
+     * property. The fork only persists the feature flag, exactly like
+     * `reboot()` and `forceStopApp()` do.
+     */
     override fun setAdbRootEnabled(enabled: Boolean): Boolean =
-        if (execKsud("feature set adb_root ${if (enabled) 1 else 0}", true)) {
-            ShellUtils.fastCmd("setprop ctl.restart adbd")
-            true
-        } else {
-            false
-        }
+        execKsud("feature set adb_root ${if (enabled) 1 else 0}", true)
 
     override suspend fun getShellSuAdbOnlyStatus(): String = getFeatureStatus("shell_su_adb_only")
 

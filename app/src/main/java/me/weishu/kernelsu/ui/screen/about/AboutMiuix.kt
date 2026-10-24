@@ -64,7 +64,6 @@ import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.isInDarkTheme
 import me.weishu.kernelsu.ui.util.BlurredBar
-import me.weishu.kernelsu.ui.fake.fakeAppName
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import me.weishu.kernelsu.ui.fake.rememberFakeUnlockModifier
 import top.yukonga.miuix.kmp.basic.Card
@@ -124,36 +123,48 @@ fun AboutScreenMiuix(
 
     Scaffold(
         topBar = {
+            val unlockModifier = rememberFakeUnlockModifier {
+                if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
+            }
             BlurredBar(
                 backdrop = barBlurBackdrop,
                 blurActive = blurActive,
-                modifier = rememberFakeUnlockModifier {
-                    if (navigator.current() !is Route.FakePanel) navigator.push(Route.FakePanel)
-                },
             ) {
-                SmallTopAppBar(
-                    title = fakeAppName(),
-                    scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
-                    titleColor = colorScheme.onSurface.copy(
-                        alpha = ((scrollProgress - 0.35f) / 0.65f).coerceIn(0f, 1f),
-                    ),
-                    navigationIcon = {
-                        IconButton(
-                            onClick = actions.onBack
-                        ) {
-                            val layoutDirection = LocalLayoutDirection.current
-                            Icon(
-                                modifier = Modifier.graphicsLayer {
-                                    if (layoutDirection == LayoutDirection.Rtl) scaleX = -1f
-                                },
-                                imageVector = MiuixIcons.Back,
-                                contentDescription = null,
-                                tint = colorScheme.onBackground
-                            )
-                        }
-                    },
-                )
+                Box {
+                    SmallTopAppBar(
+                        title = state.title,
+                        scrollBehavior = topAppBarScrollBehavior,
+                        color = barColor,
+                        titleColor = colorScheme.onSurface.copy(
+                            alpha = ((scrollProgress - 0.35f) / 0.65f).coerceIn(0f, 1f),
+                        ),
+                        navigationIcon = {
+                            IconButton(
+                                onClick = actions.onBack
+                            ) {
+                                val layoutDirection = LocalLayoutDirection.current
+                                Icon(
+                                    modifier = Modifier.graphicsLayer {
+                                        if (layoutDirection == LayoutDirection.Rtl) scaleX = -1f
+                                    },
+                                    imageVector = MiuixIcons.Back,
+                                    contentDescription = null,
+                                    tint = colorScheme.onBackground
+                                )
+                            }
+                        },
+                    )
+                    // The material variant binds the gesture to the title text, so
+                    // the back button keeps its tap. Miuix only takes a String title
+                    // and eats the press itself, hence a hotspot over the title area
+                    // instead — everything after the back button.
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(start = BackButtonZone)
+                            .then(unlockModifier)
+                    )
+                }
             }
         },
         popupHost = { },
@@ -458,3 +469,7 @@ private fun AboutContent(
         }
     }
 }
+
+// NavigationIconPadding (16.dp) + IconButton min width (40.dp), plus a little
+// slack: the unlock hotspot starts right after the back button.
+private val BackButtonZone = 64.dp

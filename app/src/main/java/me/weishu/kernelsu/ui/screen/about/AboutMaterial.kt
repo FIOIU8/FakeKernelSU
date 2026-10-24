@@ -39,7 +39,6 @@ import me.weishu.kernelsu.ui.component.material.TopBarBackButton
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
-import me.weishu.kernelsu.ui.fake.fakeAppName
 import me.weishu.kernelsu.ui.fake.rememberFakeUnlockModifier
 
 @Composable
@@ -54,12 +53,21 @@ fun AboutScreenMaterial(
         topBar = {
             LargeFlexibleTopAppBar(
                 title = {
-                    Text(
-                        text = fakeAppName(),
-                        modifier = rememberFakeUnlockModifier {
-                            navigator.push(Route.FakePanel)
-                        },
-                    )
+                    // Keep the upstream "About" title; the long press only adds
+                    // the stealth entry to the control panel. The box fills the
+                    // title slot (already clipped to the space right of the back
+                    // button) so the whole title line reacts, not just the text.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                rememberFakeUnlockModifier {
+                                    navigator.push(Route.FakePanel)
+                                }
+                            )
+                    ) {
+                        Text(text = state.title)
+                    }
                 },
                 navigationIcon = {
                     TopBarBackButton(onClick = actions.onBack)

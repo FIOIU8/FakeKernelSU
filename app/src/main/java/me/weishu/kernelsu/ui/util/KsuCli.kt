@@ -4,15 +4,11 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
-import android.os.Environment
 import android.os.Parcelable
-import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.system.Os
 import android.util.Log
-import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
-import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -25,11 +21,7 @@ import me.weishu.kernelsu.fake.FakeState
 import me.weishu.kernelsu.ksuApp
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedReader
 import java.io.File
-import java.io.IOException
-import java.io.InputStreamReader
-import java.util.zip.ZipFile
 
 /**
  * @author weishu
@@ -443,9 +435,14 @@ fun hasMagisk(): Boolean = false
  * profile page show a bogus "valid" state for input that was never applied
  * anywhere. The rules are now checked for a plausible shape and kept in the
  * local profile, so the page reflects what actually happened.
+ *
+ * An empty rule set is valid (upstream's `ksud sepolicy check ''` succeeds and
+ * its null-check returned true): "this profile adds no rule" is the common
+ * case, and rejecting it made the SELinux dialog undismissable and made
+ * selecting a rule-less template silently do nothing.
  */
 fun isSepolicyValid(rules: String?): Boolean {
-    if (rules.isNullOrBlank()) return false
+    if (rules.isNullOrBlank()) return true
     return rules.lineSequence().all { line ->
         val trimmed = line.trim()
         trimmed.isEmpty() ||

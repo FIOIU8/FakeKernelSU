@@ -7,7 +7,13 @@ import com.topjohnwu.superuser.Shell
  * Safe to call from any thread (IO recommended).
  */
 fun getSELinuxStatusRaw(): String {
-    val shell = Shell.Builder.create().build("sh")
+    // FakeKernelSU: libsu's builder tries `su` before falling back to a plain
+    // `sh`, so the default builder would hand this demo a **root** shell on a
+    // rooted device just to run `getenforce`. FLAG_NON_ROOT_SHELL skips both
+    // `su` attempts - the same rule createRootShell() applies in KsuCli.
+    val shell = Shell.Builder.create()
+        .setFlags(Shell.FLAG_NON_ROOT_SHELL)
+        .build("sh")
 
     val stdoutList = ArrayList<String>()
     val stderrList = ArrayList<String>()

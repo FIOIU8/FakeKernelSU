@@ -81,7 +81,26 @@ object Natives {
         get() = false
 
     fun uidShouldUmount(uid: Int): Boolean {
-        return isDefaultUmountModules()
+        // Mirrors ksu_uid_should_umount() in kernel/policy/allowlist.c:
+        //  - never unmount for the manager itself;
+        //  - a granted app (allowSu) keeps its modules;
+        //  - otherwise the profile's non-root config applies, falling back to
+        //    the default non-root profile.
+        // Answering "just the default" for every uid made the per-app
+        // "umount modules" state in the superuser list meaningless.
+        if (uid == ksuApp.applicationInfo.uid) return false
+        // The kernel keys profiles by uid; here they are keyed by package
+        // name, so several packages of one shared uid can disagree.
+        val profiles = FakeProfiles.all().values.filter { it.currentUid == uid }
+        // Prefer a profile that carries an explicit non-root config; a plain
+        // "use default" one looks the same as no profile at all.
+        val profile = profiles.firstOrNull { !it.nonRootUseDefault } ?: profiles.firstOrNull()
+        return when {
+            profile == null -> isDefaultUmountModules()
+            profiles.any { it.allowSu } -> false
+            profile.nonRootUseDefault -> isDefaultUmountModules()
+            else -> profile.umountModules
+        }
     }
 
     /**
@@ -107,11 +126,11 @@ object Natives {
      *  negative : error
      */
     fun isSuEnabled(): Boolean {
-        return FakeState.rootAvailable
+        return FakeState.suEnabled
     }
 
     fun setSuEnabled(enabled: Boolean): Boolean {
-        FakeState.rootAvailable = enabled
+        FakeState.suEnabled = enabled
         return true
     }
 
@@ -148,14 +167,21 @@ object Natives {
     }
 
     /**
-     * The Android user name of [uid].
+     * The Android user name of [uid], like upstream's `getpwuid()` wrapper.
      *
      * Android encodes a uid as `userId * 100000 + appId`, and the app id
-     * itself is `10000 + appId` for a normal app. The old implementation
-     * always assumed user 0, so uid 0 came out as "u0_a0" instead of "root".
+     * itself is `10000 + appIndex` for a normal app. Upstream asks the
+     * platform passwd table, which answers "root" for 0, "system" for 1000
+     * and "shell" for 2000; the demo only needs the same names for the three
+     * fixed uids and the `u<user>_a<index>` shape for apps.
      */
     fun getUserName(uid: Int): String? {
         if (uid < 0) return null
+        when (uid) {
+            ROOT_UID -> return "root"
+            1000 -> return "system"
+            2000 -> return "shell"
+        }
         val userId = uid / PER_USER_RANGE
         val appId = uid % PER_USER_RANGE
         return if (appId < FIRST_APPLICATION_UID) {

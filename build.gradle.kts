@@ -9,7 +9,6 @@ extra["androidTargetSdkVersion"] = 37
 extra["androidCompileSdkVersion"] = 37
 extra["androidCompileSdkVersionMinor"] = 0
 extra["androidBuildToolsVersion"] = "36.0.0"
-extra["androidCompileNdkVersion"] = libs.versions.ndk.get()
 extra["androidSourceCompatibility"] = JavaVersion.VERSION_21
 extra["androidTargetCompatibility"] = JavaVersion.VERSION_21
 extra["managerVersionCode"] = getVersionCode()

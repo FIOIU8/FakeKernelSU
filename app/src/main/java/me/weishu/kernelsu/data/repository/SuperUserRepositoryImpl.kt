@@ -43,6 +43,19 @@ class SuperUserRepositoryImpl : SuperUserRepository {
                 .sortedBy { it.label.lowercase() }
                 .toMutableList()
 
+            // Upstream reads the user id list from the root AIDL service. The
+            // fake manager can only enumerate the current user's packages, so
+            // the list is derived from the uids it actually saw instead of a
+            // hardcoded `0` (a wrong list makes the multi-user filters and the
+            // owner labels lie on work-profile devices).
+            val userIds = newApps.asSequence()
+                .mapNotNull { it.packageInfo.applicationInfo?.uid }
+                .map { it / 100000 }
+                .distinct()
+                .sorted()
+                .toList()
+                .ifEmpty { listOf(0) }
+
             // WebView Zygote is a single system UID, not a per-user package. Reuse the system icon.
             val systemInfo = ApplicationInfo(pm.getApplicationInfo("android", 0)).apply {
                 uid = WEBVIEW_ZYGOTE_UID
@@ -59,7 +72,7 @@ class SuperUserRepositoryImpl : SuperUserRepository {
                 special = true,
             )
 
-            Pair(newApps, listOf(0))
+            Pair(newApps, userIds)
         }
     }
 

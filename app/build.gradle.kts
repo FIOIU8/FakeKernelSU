@@ -30,13 +30,6 @@ val releaseKeystore = providers.gradleProperty("KEYSTORE_FILE").orNull
     ?.let { rootProject.file(it) }
     ?.takeIf { it.exists() }
 
-val baseCFlags = listOf(
-    "-Wall", "-Qunused-arguments", "-fvisibility=hidden", "-fvisibility-inlines-hidden",
-    "-fno-exceptions", "-fno-stack-protector", "-fomit-frame-pointer",
-    "-Wno-builtin-macro-redefined", "-Wno-unused-value", "-D__FILE__=__FILE_NAME__"
-)
-val baseCppFlags = baseCFlags + "-fno-rtti"
-
 android {
     namespace = "me.weishu.kernelsu"
 
@@ -69,7 +62,6 @@ android {
     }
 
     buildFeatures {
-        aidl = true
         buildConfig = true
         resValues = true
         compose = true
@@ -172,7 +164,9 @@ dependencies {
     implementation(libs.com.github.topjohnwu.libsu.service)
     implementation(libs.com.github.topjohnwu.libsu.io)
 
-    implementation(libs.dev.rikka.rikkax.parcelablelist)
+    // dev.rikka.rikkax.parcelablelist used to back the deleted IKsuInterface
+    // (ParcelableList<PackageInfo> across the AIDL boundary); nothing
+    // references it now.
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

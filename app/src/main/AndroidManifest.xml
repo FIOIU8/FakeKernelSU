@@ -38,11 +38,17 @@
         </intent>
     </queries>
 
+    <!--
+      No android:directBootAware here (upstream sets it). Upstream needs it for
+      the MagicaService / BootCompletedReceiver pair, both of which this fork
+      removed. Keeping it would only allow the UI to start before the user is
+      unlocked, where the fake data layer's SharedPreferences (CE storage) is
+      not readable yet.
+    -->
     <application
         android:name=".KernelSUApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:directBootAware="true"
         android:fullBackupContent="@xml/backup_rules"
         android:hasFragileUserData="true"
         android:icon="@mipmap/ic_launcher"
