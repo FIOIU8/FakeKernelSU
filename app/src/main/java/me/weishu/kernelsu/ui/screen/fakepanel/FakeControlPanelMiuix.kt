@@ -200,24 +200,26 @@ fun FakeControlPanelMiuix(state: FakePanelState) {
                             onValueChange = { state.updateKsuVersion(it) },
                             textHint = "13000",
                         )
-                        EditText(
-                            title = stringResource(R.string.fake_panel_manager_version_code),
-                            value = state.managerVersionCode,
-                            onValueChange = { state.updateManagerVersionCode(it) },
-                        )
-                        if (state.managerVersionCode.isNotBlank()) {
-                            HintText(
-                                stringResource(
-                                    R.string.fake_panel_compare_value,
-                                    state.managerVersionCode.toLongOrNull() ?: 0L,
-                                )
-                            )
-                        }
+                        // The disguise itself: a release-shaped x.y.z instead
+                        // of the fork's git-describe build name.
                         EditText(
                             title = stringResource(R.string.fake_panel_manager_version_name),
                             value = state.managerVersionName,
                             onValueChange = { state.updateManagerVersionName(it) },
                         )
+                        EditText(
+                            title = stringResource(R.string.fake_panel_manager_version_code),
+                            value = state.managerVersionCode,
+                            onValueChange = { state.updateManagerVersionCode(it) },
+                        )
+                        state.effectiveManagerVersionCode?.let { compareCode ->
+                            HintText(
+                                stringResource(
+                                    R.string.fake_panel_compare_value,
+                                    compareCode,
+                                )
+                            )
+                        }
                         SectionLabel(stringResource(R.string.fake_panel_mode))
                         FakeWorkingMode.entries.forEach { mode ->
                             RadioButtonPreference(

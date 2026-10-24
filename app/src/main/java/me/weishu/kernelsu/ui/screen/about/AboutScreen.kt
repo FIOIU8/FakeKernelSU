@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.fake.FakeManagerVersion
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
@@ -23,7 +24,7 @@ fun AboutScreen() {
     val state = AboutUiState(
         title = stringResource(R.string.about),
         appName = fakeAppName(),
-        versionName = BuildConfig.VERSION_NAME,
+        versionName = FakeManagerVersion.name(BuildConfig.VERSION_NAME),
         links = extractLinks(htmlString),
     )
     val actions = AboutScreenActions(

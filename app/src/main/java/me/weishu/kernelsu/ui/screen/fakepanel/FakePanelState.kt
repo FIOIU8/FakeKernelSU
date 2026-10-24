@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import me.weishu.kernelsu.fake.FakeInstallState
+import me.weishu.kernelsu.fake.FakeManagerVersion
 import me.weishu.kernelsu.fake.FakeSeccompMode
 import me.weishu.kernelsu.fake.FakeSelinuxMode
 import me.weishu.kernelsu.fake.FakeState
@@ -101,7 +102,11 @@ class FakePanelState {
 
     fun selectWorkingMode(mode: FakeWorkingMode) {
         if (mode == FakeWorkingMode.JAILBREAK) {
+            // applyJailbreak() also answers the control panel: a forced
+            // "not installed" override would otherwise survive and make the
+            // home page contradict the jailbreak state.
             FakeState.applyJailbreak()
+            stateOverride = FakeState.stateOverride
             jailbreakMode = true
             lkmMode = FakeState.lkmMode
             return
@@ -122,10 +127,32 @@ class FakePanelState {
         FakeState.managerVersionCodeOverride = managerVersionCode.toLongOrNull() ?: 0L
     }
 
-    fun updateManagerVersionName(value: String) {
-        managerVersionName = value
-        FakeState.managerVersionNameOverride = value
+    fun updateManagerVersionName(input: String) {
+        // A manager reports a release (x.y.z), not free text: keep digits and
+        // single dots so whatever is typed here still reads as a version.
+        val sanitized = buildString {
+            for (ch in input) {
+                when {
+                    ch.isDigit() -> append(ch)
+                    ch == '.' && isNotEmpty() && last() != '.' -> append(ch)
+                }
+            }
+        }.take(15)
+        managerVersionName = sanitized
+        // The trailing dot only exists while the user is still typing "3.".
+        FakeState.managerVersionNameOverride = sanitized.trim('.')
     }
+
+    /**
+     * The versionCode that follows from [managerVersionName] (`3.1.2` -> 30102),
+     * or null when the field is empty / not a version yet.
+     */
+    val derivedManagerVersionCode: Long?
+        get() = FakeManagerVersion.codeFromName(managerVersionName)
+
+    /** What the update check compares against; null = the real build value. */
+    val effectiveManagerVersionCode: Long?
+        get() = managerVersionCode.toLongOrNull()?.takeIf { it > 0L } ?: derivedManagerVersionCode
 
     fun selectSelinuxMode(entry: FakeSelinuxMode) {
         selinuxMode = entry

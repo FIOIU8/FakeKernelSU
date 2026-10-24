@@ -20,6 +20,7 @@ import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.registry.DownloadVerificationException
 import me.weishu.kernelsu.data.registry.RegistryDownloadStore
 import me.weishu.kernelsu.data.registry.copyForInstall
+import me.weishu.kernelsu.fake.FakeManagerVersion
 import me.weishu.kernelsu.ksuApp
 import me.weishu.kernelsu.ui.util.removeAsRoot
 import java.io.File
@@ -83,8 +84,8 @@ object ScriptRepository {
 
     fun hostInfo(): ScriptHostInfo = ScriptHostInfo(
         // Same value as ksud's VERSION_NAME (git describe without the leading "v").
-        ksuVersion = BuildConfig.VERSION_NAME.removePrefix("v"),
-        ksuVersionCode = BuildConfig.VERSION_CODE,
+        ksuVersion = FakeManagerVersion.name(BuildConfig.VERSION_NAME).removePrefix("v"),
+        ksuVersionCode = FakeManagerVersion.code(BuildConfig.VERSION_CODE.toLong()).toInt(),
         kernelVersionCode = Natives.version,
         lateLoad = Natives.isLateLoadMode,
     )

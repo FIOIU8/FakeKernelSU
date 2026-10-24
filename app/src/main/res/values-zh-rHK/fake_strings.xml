@@ -122,9 +122,9 @@
     <string name="fake_panel_lkm_update">內置 LKM 更新</string>
     <string name="fake_panel_lkm_update_summary">在首頁顯示「有較新的內置 LKM」提示（僅限 LKM 模式）</string>
     <string name="fake_panel_manager_version_code">管理器版本代碼</string>
-    <string name="fake_panel_manager_version_code_summary">用於更新檢查；留空 = 實際值</string>
+    <string name="fake_panel_manager_version_code_summary">用於更新檢查；留空 = 依版本名稱推算</string>
     <string name="fake_panel_manager_version_name">管理器版本名稱</string>
-    <string name="fake_panel_manager_version_name_summary">顯示於首頁；留空 = 實際值</string>
+    <string name="fake_panel_manager_version_name_summary">首頁、關於頁與腳本；x.y.z；留空 = 實際值</string>
     <string name="fake_panel_mode">模式</string>
     <string name="fake_panel_naming">名稱與偽裝</string>
     <string name="fake_panel_runtime">執行環境</string>

@@ -76,9 +76,9 @@
     <string name="fake_panel_ksu_version">KSU version</string>
     <string name="fake_panel_ksu_version_summary">Shown as the working version</string>
     <string name="fake_panel_manager_version_code">Manager version code</string>
-    <string name="fake_panel_manager_version_code_summary">Used by the update check; empty = real</string>
+    <string name="fake_panel_manager_version_code_summary">Used by the update check; empty = derived from the name</string>
     <string name="fake_panel_manager_version_name">Manager version name</string>
-    <string name="fake_panel_manager_version_name_summary">Shown on the home page; empty = real</string>
+    <string name="fake_panel_manager_version_name_summary">Home page, About and scripts; x.y.z; empty = real</string>
     <string name="fake_panel_compare_value">Comparing against %1$d</string>
     <string name="fake_panel_selinux_mode">SELinux mode</string>
     <string name="fake_panel_seccomp_status">Seccomp status</string>

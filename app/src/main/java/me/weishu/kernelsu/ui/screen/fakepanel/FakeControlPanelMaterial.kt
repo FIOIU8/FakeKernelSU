@@ -169,6 +169,15 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                     numeric = true,
                     onValueChange = { state.updateKsuVersion(it) },
                 )
+                // The disguise itself: a release-shaped x.y.z instead of the
+                // fork's git-describe build name. It drives the home page, the
+                // about page and the version handed to module scripts.
+                PanelTextField(
+                    value = state.managerVersionName,
+                    label = stringResource(R.string.fake_panel_manager_version_name),
+                    placeholder = stringResource(R.string.fake_panel_manager_version_name_summary),
+                    onValueChange = { state.updateManagerVersionName(it) },
+                )
                 PanelTextField(
                     value = state.managerVersionCode,
                     label = stringResource(R.string.fake_panel_manager_version_code),
@@ -176,22 +185,13 @@ fun FakeControlPanelMaterial(state: FakePanelState) {
                     numeric = true,
                     onValueChange = { state.updateManagerVersionCode(it) },
                 )
-                if (state.managerVersionCode.isNotBlank()) {
+                state.effectiveManagerVersionCode?.let { compareCode ->
                     Text(
-                        text = stringResource(
-                            R.string.fake_panel_compare_value,
-                            state.managerVersionCode.toLongOrNull() ?: 0L,
-                        ),
+                        text = stringResource(R.string.fake_panel_compare_value, compareCode),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                PanelTextField(
-                    value = state.managerVersionName,
-                    label = stringResource(R.string.fake_panel_manager_version_name),
-                    placeholder = stringResource(R.string.fake_panel_manager_version_name_summary),
-                    onValueChange = { state.updateManagerVersionName(it) },
-                )
                 Text(
                     text = stringResource(R.string.fake_panel_mode),
                     style = MaterialTheme.typography.titleSmall,

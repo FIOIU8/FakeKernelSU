@@ -3,7 +3,7 @@ package me.weishu.kernelsu.ui.screen.home
 import android.content.Context
 import androidx.compose.runtime.Immutable
 import androidx.core.content.pm.PackageInfoCompat
-import me.weishu.kernelsu.fake.FakeState
+import me.weishu.kernelsu.fake.FakeManagerVersion
 
 @Immutable
 data class ManagerVersion(
@@ -21,9 +21,6 @@ data class SystemInfo(
     val seccompStatus: Int
 )
 
-/** The value [FakeState.ksuVersion] ships with, i.e. "never touched by the user". */
-const val DEFAULT_KSU_VERSION = FakeState.DEFAULT_KSU_VERSION
-
 /**
  * Manager version used for display and for the update check.
  *
@@ -37,17 +34,10 @@ fun getManagerVersion(context: Context): ManagerVersion {
     val realVersionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
     val realVersionName = packageInfo.versionName.orEmpty()
 
-    val codeOverride = FakeState.managerVersionCodeOverride
-    val nameOverride = FakeState.managerVersionNameOverride
-
-    // Compatibility with the pre-#2 lab: users who only ever typed into the old
-    // "KSU version" field expect that number to be the one being compared.
-    val legacyCode = FakeState.ksuVersion
-        .takeIf { codeOverride == 0L && it != DEFAULT_KSU_VERSION }
-        ?.toLong()
-
+    // Both halves go through the lab so the disguised name and the code that
+    // is compared against `tiann/KernelSU` releases always agree.
     return ManagerVersion(
-        versionName = nameOverride.ifBlank { realVersionName },
-        versionCode = codeOverride.takeIf { it > 0L } ?: legacyCode ?: realVersionCode,
+        versionName = FakeManagerVersion.name(realVersionName),
+        versionCode = FakeManagerVersion.code(realVersionCode),
     )
 }
