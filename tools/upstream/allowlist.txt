@@ -32,6 +32,7 @@ M  app/src/main/AndroidManifest.xml  # fksu:// deep-link scheme, launcher aliase
 # --- data layer ------------------------------------------------------------
 M  app/src/main/java/me/weishu/kernelsu/data/repository/SettingsRepositoryImpl.kt  # check_update defaults to false; setAdbRootEnabled no longer restarts adbd through libsu's root-capable default shell (the fake build must never run a system command as root)
 M  app/src/main/java/me/weishu/kernelsu/data/repository/SuperUserRepositoryImpl.kt  # reads the local fake data layer instead of the root interface; the user id list is derived from the enumerated uids
+M  app/src/main/java/me/weishu/kernelsu/data/script/ScriptRepository.kt  # KSU_VERSION and the manager version code handed to module scripts come from the fake manager version, so the lab's disguise is not contradicted by the script environment
 M  app/src/main/java/me/weishu/kernelsu/Natives.kt  # fake Natives: no root, no kernel, no /proc
 M  app/src/main/java/me/weishu/kernelsu/KernelSUApplication.kt  # no native initialisation; okhttp client is created before the user-unlocked early return
 
