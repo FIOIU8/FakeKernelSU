@@ -180,19 +180,49 @@ jobs:
           echo "file=$OUT" >> "$GITHUB_OUTPUT"
           echo "name=$OUT" >> "$GITHUB_OUTPUT"
 
+      # The commit list is collapsed behind <details> so it cannot bury the
+      # download links. Two shapes are produced, chosen by the commit count:
+      #
+      #   1. few commits   -> the full list, collapsed
+      #   2. many commits  -> just the count plus a compare link: a collapsed
+      #                       wall of 40+ bullets is longer to scan than the
+      #                       diff it summarises, so the link wins.
+      #
+      # Rendering rules that must not be "tidied away":
+      #   * a blank line is REQUIRED after the <summary> line and before
+      #     </details> - without them GFM treats the body as raw HTML text and
+      #     the "- " bullets / [links]() would not be parsed at all;
+      #   * GFM does not parse block-level Markdown inside <summary>, so the
+      #     "###" below is shown literally rather than as a heading. That is
+      #     intentional (readable as plain text); swap it for <strong> if a
+      #     real bold label is preferred.
       - name: Generate changelog
         env:
           TAG: ${{ steps.tag.outputs.tag }}
           NOTES: ${{ inputs.notes }}
+          # More commits than this -> compare link instead of an inline list.
+          COLLAPSE_LIMIT: '40'
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
           if [ -n "$PREV_TAG" ]; then
-            # tformat (not format) so every line, including the last, is newline-terminated
-            git log --pretty=tformat:"- %s (%h)" "$PREV_TAG..$TAG" > changes.txt || true
+            RANGE="$PREV_TAG..$TAG"
+            RANGE_TEXT="between \`$PREV_TAG\` ... \`$TAG\`"
+            COMPARE_URL="https://github.com/${GITHUB_REPOSITORY}/compare/${PREV_TAG}...${TAG}"
           else
-            git log --pretty=tformat:"- %s (%h)" "$TAG" > changes.txt || true
+            # No previous tag: there is nothing to compare against, so fall
+            # back to the tag's commit history.
+            RANGE="$TAG"
+            RANGE_TEXT="on \`$TAG\`"
+            COMPARE_URL="https://github.com/${GITHUB_REPOSITORY}/commits/${TAG}"
           fi
+          # tformat (not format) so every line, including the last, is
+          # newline-terminated. "<" / ">" are escaped: a commit subject such as
+          # "fix </details> handling" would otherwise close the collapsed block
+          # early and break the rest of the body.
+          git log --pretty=tformat:"- %s (%h)" "$RANGE" 2>/dev/null \
+            | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' > changes.txt || true
           [ -s changes.txt ] || echo "- No changes recorded." > changes.txt
+          LINES=$(grep -c '' changes.txt)
           {
             echo "## FakeKernelSU $TAG"
             echo
@@ -203,9 +233,22 @@ jobs:
               echo "$NOTES"
               echo
             fi
-            echo "### Changes since previous tag"
+            echo "<details>"
+            if [ "$LINES" -gt "$COLLAPSE_LIMIT" ]; then
+              echo "<summary>### Changes since previous tag ($LINES commits - see the full comparison)</summary>"
+              echo
+              echo "$LINES commit(s) $RANGE_TEXT - too many to read inline."
+              echo
+              echo "[View the full comparison]($COMPARE_URL)"
+            else
+              echo "<summary>### Changes since previous tag</summary>"
+              echo
+              echo "$LINES commit(s) $RANGE_TEXT - [full comparison]($COMPARE_URL)"
+              echo
+              cat changes.txt
+            fi
             echo
-            cat changes.txt
+            echo "</details>"
           } > body.md
 
       # Draft only - a human reviews and publishes it from the Releases page.
